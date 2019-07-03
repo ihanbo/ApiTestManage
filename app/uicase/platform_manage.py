@@ -1,8 +1,8 @@
 from flask import request, jsonify
 
 from app import db
+from app.api_1_0 import api
 from app.models import Platform
-from . import api
 
 
 @api.route('/platform/add', methods=['POST'])
@@ -13,8 +13,8 @@ def add_plat():
     platformName = data.get('platformName')
     if not platformName:
         return jsonify({'msg': '平台名称不能为空', 'status': 0})
-    if Platform.query.filter_by(name=platformName).first():
-        return jsonify({'msg': '项目名字重复', 'status': 0})
+    if Platform.query.filter_by(p_name=platformName).first():
+        return jsonify({'msg': '平台名字重复', 'status': 0})
     else:
         new_platform = Platform(p_name=platformName)
         db.session.add(new_platform)
@@ -38,5 +38,7 @@ def find_all_plat():
     '''查询平台
     '''
     _data = Platform.query.order_by(Platform.id.asc()).all()
-    plats = [{'id': c.id, 'name': c.name} for c in _data]
+    print(len(_data))
+    plats = [{'id': c.id,
+              'name': c.p_name} for c in _data]
     return jsonify({'data': plats, 'status': 1})
