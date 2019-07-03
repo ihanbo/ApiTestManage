@@ -1,4 +1,4 @@
-alembic==1.0.3
+alembic
 aniso8601==4.0.1
 APScheduler==3.5.3
 billiard==3.5.0.4

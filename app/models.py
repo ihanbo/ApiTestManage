@@ -71,7 +71,7 @@ class User(UserMixin, db.Model):
             db.session.add(user)
             db.session.commit()
             print('Administrator account created successfully')
-            print('--'*30)
+            print('--' * 30)
 
     @property
     def password(self):
@@ -237,6 +237,11 @@ class Task(db.Model):
     created_time = db.Column(db.DateTime(), default=datetime.now, comment='任务的创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
+
+class Platform(db.Model):
+    __tablename__ = 'platform'
+    id = db.Column(db.Integer, primary_key=True, comment='主键，自增')
+    p_name = db.Column(db.String(64), comment='应用平台类型',unique=True)
 
 @login_manager.user_loader
 def load_user(user_id):
