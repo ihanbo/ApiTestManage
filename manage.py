@@ -6,7 +6,7 @@
 """
 import os
 from app import create_app, db
-from app.models import User, Role
+from app.models import User, Role, UIAction
 from flask_migrate import Migrate
 import click
 
@@ -26,6 +26,7 @@ def initdata():
     click.echo('Initializing the roles and permissions and admin...')
     Role.init_role()
     User.init_user()  # 初始化
+    UIAction.init_action()  # 初始化
     click.echo('Done.')
 
 # manager.add_command("shell", Shell(make_context=make_shell_context))
@@ -36,6 +37,7 @@ def initdata():
 
 
 if __name__ == '__main__':
+    UIAction.init_action()  # 初始化
     app.run(host='127.0.0.1', port=8080, debug=True)
     # manager.run(default_command='runserver')
     # manager.run(default_command='shell')

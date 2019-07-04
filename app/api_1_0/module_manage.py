@@ -1,7 +1,8 @@
 from flask import jsonify, request
-from . import api, login_required
-from app.models import *
 from flask_login import current_user
+
+from app.models import *
+from . import api, login_required
 from ..util.utils import *
 
 
@@ -87,6 +88,8 @@ def del_model():
         return jsonify({'msg': '不能删除别人项目下的模块', 'status': 0})
     if _edit.api_msg.all():
         return jsonify({'msg': '请先删除模块下的接口用例', 'status': 0})
+    if _edit.ui_cases.all():
+        return jsonify({'msg': '请先删除模块下的UI用例', 'status': 0})
     db.session.delete(_edit)
     return jsonify({'msg': '删除成功', 'status': 1})
 

@@ -1,11 +1,13 @@
 # encoding: utf-8
-from werkzeug.security import check_password_hash, generate_password_hash
-from . import db, login_manager
+from collections import OrderedDict
 from datetime import datetime
+
+from flask import current_app
 from flask_login import UserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from flask import current_app
-from collections import OrderedDict
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from . import db, login_manager
 
 roles_permissions = db.Table('roles_permissions',
                              db.Column('role_id', db.Integer, db.ForeignKey('role.id')),
@@ -121,6 +123,7 @@ class Module(db.Model):
     num = db.Column(db.Integer(), nullable=True, comment='模块序号')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
     api_msg = db.relationship('ApiMsg', order_by='ApiMsg.num.asc()', lazy='dynamic')
+    ui_cases = db.relationship('UICase', order_by='UICase.num.asc()', lazy='dynamic')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
@@ -241,7 +244,53 @@ class Task(db.Model):
 class Platform(db.Model):
     __tablename__ = 'platform'
     id = db.Column(db.Integer, primary_key=True, comment='主键，自增')
-    p_name = db.Column(db.String(64), comment='应用平台类型',unique=True)
+    p_name = db.Column(db.String(64), comment='应用平台类型', unique=True)
+
+
+class UIAction(db.Model):
+    __tablename__ = 'ui_action'
+    id = db.Column(db.Integer, primary_key=True, comment='主键，自增')
+    action = db.Column(db.String(64), comment='行为', unique=True)
+    action_name = db.Column(db.String(64), comment='行为名称')
+
+    @staticmethod
+    def init_action():
+        action1 = UIAction.query.filter_by(action=u'click').first()
+        if action1 is None:
+            a1 = UIAction(action=u'click', action_name=u'点击')
+            db.session.add(a1)
+            db.session.commit()
+        action2 = UIAction.query.filter_by(action=u'swipe').first()
+        if action2 is None:
+            a2 = UIAction(action=u'swipe', action_name=u'滑动')
+            db.session.add(a2)
+            db.session.commit()
+        action3 = UIAction.query.filter_by(action=u'input').first()
+        if action3 is None:
+            a3 = UIAction(action=u'input', action_name=u'输入')
+            db.session.add(a3)
+            db.session.commit()
+        print('default action was created successfully')
+        print('--' * 30)
+
+
+class UICase(db.Model):
+    __tablename__ = 'ui_case'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    num = db.Column(db.Integer(), nullable=True, comment='case序号')
+    name = db.Column(db.String(128), nullable=True, comment='名称')
+    desc = db.Column(db.String(256), nullable=True, comment='描述')
+    xpath = db.Column(db.String(1024), comment='定位元素路径')
+    resourceid = db.Column(db.String(256), comment='定位元素id')
+    text = db.Column(db.String(256), comment='定位元素文本')
+    action = db.Column(db.Integer, db.ForeignKey('ui_action.id'), comment='case行为')
+    extraParam = db.Column(db.String(256), comment='描述')
+    platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
+    module_id = db.Column(db.Integer, db.ForeignKey('module.id'), comment='所属的接口模块id')
+    project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now)
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
 
 @login_manager.user_loader
 def load_user(user_id):
