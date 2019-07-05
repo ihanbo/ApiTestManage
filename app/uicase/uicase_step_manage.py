@@ -17,8 +17,8 @@ def add_uicase():
     project_name = data.get('projectName')
     module_id = data.get('moduleId')
 
-    caseStepId = data.get('caseId')
-    caseStepName = data.get('caseName')
+    caseStepId = data.get('caseStepId')
+    caseStepName = data.get('caseStepName')
     desc = data.get('desc')
     platform = data.get('platform')
 
@@ -65,7 +65,7 @@ def add_uicase():
         old_data.action = action
 
         db.session.commit()
-        return jsonify({'msg': '修改成功', 'status': 1, 'case_id': caseStepId, 'num': num})
+        return jsonify({'msg': '修改成功', 'status': 1, 'caseStepId': caseStepId, 'num': num})
     else:
         if UICaseStep.query.filter_by(name=caseStepName, module_id=module_id).first():
             return jsonify({'msg': '名字重复', 'status': 0})
@@ -83,7 +83,7 @@ def add_uicase():
                                    module_id=module_id)
             db.session.add(new_cases)
             db.session.commit()
-            return jsonify({'msg': '新建成功', 'status': 1, 'case_id': new_cases.id, 'num': new_cases.num})
+            return jsonify({'msg': '新建成功', 'status': 1, 'caseStepId': new_cases.id, 'num': new_cases.num})
 
 
 @api.route('/uicasestep/delete', methods=['POST'])
