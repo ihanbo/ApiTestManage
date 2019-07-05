@@ -246,12 +246,29 @@ class Platform(db.Model):
     id = db.Column(db.Integer, primary_key=True, comment='主键，自增')
     p_name = db.Column(db.String(64), comment='应用平台类型', unique=True)
 
+    def to_dict(self):
+        '''将对象转换为字典数据'''
+        p_dict = {
+            "id": self.id,
+            "p_name": self.p_name
+        }
+        return p_dict
+
 
 class UIAction(db.Model):
     __tablename__ = 'ui_action'
     id = db.Column(db.Integer, primary_key=True, comment='主键，自增')
     action = db.Column(db.String(64), comment='行为', unique=True)
     action_name = db.Column(db.String(64), comment='行为名称')
+
+    def action_to_dict(self):
+        '''将对象转换为字典数据'''
+        a_dict = {
+            "id": self.id,
+            "action": self.action,
+            "action_name": self.action_name
+        }
+        return a_dict
 
     @staticmethod
     def init_action():

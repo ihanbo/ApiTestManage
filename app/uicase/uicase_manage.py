@@ -65,7 +65,7 @@ def add_uicase():
         old_data.action = action
 
         db.session.commit()
-        return jsonify({'msg': '修改成功', 'status': 1, 'api_msg_id': caseId, 'num': num})
+        return jsonify({'msg': '修改成功', 'status': 1, 'case_id': caseId, 'num': num})
     else:
         if UICase.query.filter_by(name=caseName, module_id=module_id).first():
             return jsonify({'msg': '名字重复', 'status': 0})
@@ -160,8 +160,6 @@ def list_action():
     return jsonify({'data': plats, 'status': 1})
 
 
-
-
 @api.route('/uicase/editAndCopy', methods=['POST'])
 @login_required
 def edit_ui_case():
@@ -169,13 +167,15 @@ def edit_ui_case():
     data = request.json
     case_id = data.get('id')
     _edit = UICase.query.filter_by(id=case_id).first()
+    platform = Platform.query.filter_by(id=_edit.platform).first()
+    action = UIAction.query.filter_by(id=_edit.action).first()
     _data = {'name': _edit.name,
              'num': _edit.num,
              'desc': _edit.desc,
              'xpath': _edit.xpath,
              'text': _edit.text,
-             'platform': Platform.filter_by(id=_edit.platform).first(),
              'resourceid': _edit.resourceid,
-             'action': UIAction.filter_by(id=_edit.action).first(),
+             'platform': platform.to_dict(),
+             'action': action.action_to_dict(),
              'extraParam': _edit.extraParam}
     return jsonify({'data': _data, 'status': 1})
