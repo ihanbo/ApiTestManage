@@ -113,7 +113,7 @@ def list_uicase():
     data = request.json
     module_id = data.get('moduleId')
     project_name = data.get('projectName')
-    case_name = data.get('caseName')
+    case_name = data.get('caseStepName')
     platform = data.get('platform')
     page = data.get('page') if data.get('page') else 1
     per_page = data.get('sizePage') if data.get('sizePage') else 20
