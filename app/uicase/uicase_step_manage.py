@@ -9,7 +9,7 @@ from app.util.custom_decorator import login_required
 from app.util.utils import auto_num, num_sort
 
 
-@api.route('/uicase/add', methods=['POST'])
+@api.route('/uicasestep/add', methods=['POST'])
 @login_required
 def add_uicase():
     """ 接口信息增加、编辑 """
@@ -17,8 +17,8 @@ def add_uicase():
     project_name = data.get('projectName')
     module_id = data.get('moduleId')
 
-    caseId = data.get('caseId')
-    caseName = data.get('caseName')
+    caseStepId = data.get('caseId')
+    caseStepName = data.get('caseName')
     desc = data.get('desc')
     platform = data.get('platform')
 
@@ -33,7 +33,7 @@ def add_uicase():
         return jsonify({'msg': '项目不能为空', 'status': 0})
     if not module_id:
         return jsonify({'msg': '模块不能为空', 'status': 0})
-    if not caseName:
+    if not caseStepName:
         return jsonify({'msg': '名称不能为空', 'status': 0})
     if not platform:
         return jsonify({'msg': '操作系统不能为空', 'status': 0})
@@ -43,19 +43,19 @@ def add_uicase():
         return jsonify({'msg': '元素行为必须填写', 'status': 0})
 
     project_id = Project.query.filter_by(name=project_name).first().id
-    num = auto_num(data.get('num'), UICase, module_id=module_id)
+    num = auto_num(data.get('num'), UICaseStep, module_id=module_id)
 
-    if caseId:
-        old_data = UICase.query.filter_by(id=caseId).first()
+    if caseStepId:
+        old_data = UICaseStep.query.filter_by(id=caseStepId).first()
         old_num = old_data.num
-        if UICase.query.filter_by(name=caseName, module_id=module_id).first() and caseName != old_data.name:
+        if UICaseStep.query.filter_by(name=caseStepName, module_id=module_id).first() and caseStepName != old_data.name:
             return jsonify({'msg': '名字重复', 'status': 0})
 
         list_data = Module.query.filter_by(id=module_id).first().ui_cases.all()
         num_sort(num, old_num, list_data, old_data)
         old_data.project_id = project_id
         old_data.module_id = module_id
-        old_data.name = caseName
+        old_data.name = caseStepName
         old_data.desc = desc
         old_data.extract = extraParam
         old_data.platform = platform
@@ -65,34 +65,34 @@ def add_uicase():
         old_data.action = action
 
         db.session.commit()
-        return jsonify({'msg': '修改成功', 'status': 1, 'case_id': caseId, 'num': num})
+        return jsonify({'msg': '修改成功', 'status': 1, 'case_id': caseStepId, 'num': num})
     else:
-        if UICase.query.filter_by(name=caseName, module_id=module_id).first():
+        if UICaseStep.query.filter_by(name=caseStepName, module_id=module_id).first():
             return jsonify({'msg': '名字重复', 'status': 0})
         else:
-            new_cases = UICase(num=num,
-                               name=caseName,
-                               desc=desc,
-                               xpath=xpath,
-                               resourceid=resourceid,
-                               text=text,
-                               action=action,
-                               extraParam=extraParam,
-                               platform=platform,
-                               project_id=project_id,
-                               module_id=module_id)
+            new_cases = UICaseStep(num=num,
+                                   name=caseStepName,
+                                   desc=desc,
+                                   xpath=xpath,
+                                   resourceid=resourceid,
+                                   text=text,
+                                   action=action,
+                                   extraParam=extraParam,
+                                   platform=platform,
+                                   project_id=project_id,
+                                   module_id=module_id)
             db.session.add(new_cases)
             db.session.commit()
             return jsonify({'msg': '新建成功', 'status': 1, 'case_id': new_cases.id, 'num': new_cases.num})
 
 
-@api.route('/uicase/delete', methods=['POST'])
+@api.route('/uicasestep/delete', methods=['POST'])
 @login_required
 def del_uicase():
     """ 删除case """
     data = request.json
     case_id = data.get('id')
-    _data = UICase.query.filter_by(id=case_id).first()
+    _data = UICaseStep.query.filter_by(id=case_id).first()
 
     project_id = Module.query.filter_by(id=_data.module_id).first().project_id
     if current_user.id != Project.query.filter_by(id=project_id).first().user_id:
@@ -107,7 +107,7 @@ def del_uicase():
     return jsonify({'msg': '删除成功', 'status': 1})
 
 
-@api.route('/uicase/list', methods=['POST'])
+@api.route('/uicasestep/list', methods=['POST'])
 def list_uicase():
     """ 查接口信息 """
     data = request.json
@@ -125,14 +125,14 @@ def list_uicase():
         return jsonify({'msg': '请先选择操作系统'.format(project_name), 'status': 0})
 
     if case_name:
-        case_data = UICase.query.filter_by(module_id=module_id, platform=platform).filter(
-            UICase.name.like('%{}%'.format(case_name)))
+        case_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform).filter(
+            UICaseStep.name.like('%{}%'.format(case_name)))
         # total = len(case_data)
         if not case_data:
             return jsonify({'msg': '没有该接口信息', 'status': 0})
     else:
-        case_data = UICase.query.filter_by(module_id=module_id, platform=platform)
-    pagination = case_data.order_by(UICase.num.asc()).paginate(page, per_page=per_page, error_out=False)
+        case_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform)
+    pagination = case_data.order_by(UICaseStep.num.asc()).paginate(page, per_page=per_page, error_out=False)
     case_data = pagination.items
     total = pagination.total
     _api = [{'id': c.id,
@@ -160,13 +160,13 @@ def list_action():
     return jsonify({'data': plats, 'status': 1})
 
 
-@api.route('/uicase/editAndCopy', methods=['POST'])
+@api.route('/uicasestep/editAndCopy', methods=['POST'])
 @login_required
 def edit_ui_case():
     """ 返回待编辑或复制的接口信息 """
     data = request.json
     case_id = data.get('id')
-    _edit = UICase.query.filter_by(id=case_id).first()
+    _edit = UICaseStep.query.filter_by(id=case_id).first()
     platform = Platform.query.filter_by(id=_edit.platform).first()
     action = UIAction.query.filter_by(id=_edit.action).first()
     _data = {'name': _edit.name,

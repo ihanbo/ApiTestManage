@@ -291,8 +291,8 @@ class UIAction(db.Model):
         print('--' * 30)
 
 
-class UICase(db.Model):
-    __tablename__ = 'ui_case'
+class UICaseStep(db.Model):
+    __tablename__ = 'ui_case_step'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
     num = db.Column(db.Integer(), nullable=True, comment='case序号')
     name = db.Column(db.String(128), nullable=True, comment='名称')
