@@ -123,7 +123,7 @@ class Module(db.Model):
     num = db.Column(db.Integer(), nullable=True, comment='模块序号')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
     api_msg = db.relationship('ApiMsg', order_by='ApiMsg.num.asc()', lazy='dynamic')
-    ui_cases = db.relationship('UICase', order_by='UICase.num.asc()', lazy='dynamic')
+    ui_cases = db.relationship('UICaseStep', order_by='UICaseStep.num.asc()', lazy='dynamic')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
