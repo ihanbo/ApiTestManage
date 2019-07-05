@@ -1,9 +1,10 @@
 # ApiTestManage
-感觉项目不错的点个star，你的支持是作者源源不断的动力~谢谢！！如有疑问可联系qq：362508572   或q群：700387899 或issue
+本项目fork自：https://github.com/pencil1/ApiTestManage
+改动：
+1. 对postmanjson的录入解析做了修改
 
 前端传送门：https://github.com/pencil1/ApiTestWeb
 
-线上demo地址：http://47.107.147.188/#/login （账号：ceshi 密码：123456）
 
 ## Environment
 python => 3
