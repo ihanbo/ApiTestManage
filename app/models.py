@@ -291,6 +291,11 @@ class UIAction(db.Model):
         print('--' * 30)
 
 
+uicase_step_ct = db.Table('uicase_step_ct',
+                          db.Column('ui_case_step_id', db.Integer, db.ForeignKey('ui_case_step.id'), primary_key=True),
+                          db.Column('ui_case', db.Integer, db.ForeignKey('ui_case.id'), primary_key=True))
+
+
 class UICaseStep(db.Model):
     __tablename__ = 'ui_case_step'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
@@ -307,6 +312,18 @@ class UICaseStep(db.Model):
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
+
+class UICase(db.Model):
+    __tablename__ = 'ui_case'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
+    module_id = db.Column(db.Integer, db.ForeignKey('module.id'), comment='所属的接口模块id')
+    platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
+    name = db.Column(db.String(256), nullable=True, comment='名称')
+    num = db.Column(db.Integer(), nullable=True, comment='case序号')
+    desc = db.Column(db.String(256), nullable=True, comment='描述')
+    steps = db.relationship('UICaseStep', secondary=uicase_step_ct, backref=db.backref('ui_case'))
 
 
 @login_manager.user_loader

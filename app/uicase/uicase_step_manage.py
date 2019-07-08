@@ -11,7 +11,7 @@ from app.util.utils import auto_num, num_sort
 
 @api.route('/uicasestep/add', methods=['POST'])
 @login_required
-def add_uicase():
+def add_uicase_step():
     """ 接口信息增加、编辑 """
     data = request.json
     project_name = data.get('projectName')
@@ -88,18 +88,18 @@ def add_uicase():
 
 @api.route('/uicasestep/delete', methods=['POST'])
 @login_required
-def del_uicase():
+def del_uicase_step():
     """ 删除case """
     data = request.json
-    case_id = data.get('id')
-    _data = UICaseStep.query.filter_by(id=case_id).first()
+    case_step_id = data.get('id')
+    _data = UICaseStep.query.filter_by(id=case_step_id).first()
 
     project_id = Module.query.filter_by(id=_data.module_id).first().project_id
     if current_user.id != Project.query.filter_by(id=project_id).first().user_id:
         return jsonify({'msg': '不能删除别人项目下的接口', 'status': 0})
 
-    # # 同步删除接口信息下对应用例下的步骤信息
-    # for d in UICase.query.filter_by(id=case_id).all():
+    # 同步删除接口信息下对应用例下的步骤信息
+    # for d in CaseAndStep.query.filter_by(id=case_step_id).all():
     #     db.session.delete(d)
 
     db.session.delete(_data)
@@ -108,7 +108,7 @@ def del_uicase():
 
 
 @api.route('/uicasestep/list', methods=['POST'])
-def list_uicase():
+def list_uicase_step():
     """ 查接口信息 """
     data = request.json
     module_id = data.get('moduleId')
@@ -162,7 +162,7 @@ def list_action():
 
 @api.route('/uicasestep/editAndCopy', methods=['POST'])
 @login_required
-def edit_ui_case():
+def edit_ui_case_step():
     """ 返回待编辑或复制的接口信息 """
     data = request.json
     case_id = data.get('id')
