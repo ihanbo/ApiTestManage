@@ -302,7 +302,7 @@ class UicaseStepInfo(db.Model):
 class UICaseStep(db.Model):
     __tablename__ = 'ui_case_step'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
-
+    num = db.Column(db.Integer(), nullable=True, comment='case序号')
     name = db.Column(db.String(128), nullable=True, comment='名称')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
     xpath = db.Column(db.String(1024), comment='定位元素路径')

@@ -37,7 +37,6 @@ def initdata():
 
 
 if __name__ == '__main__':
-    UIAction.init_action()  # 初始化
     app.run(host='127.0.0.1', port=8080, debug=True)
     # manager.run(default_command='runserver')
     # manager.run(default_command='shell')
