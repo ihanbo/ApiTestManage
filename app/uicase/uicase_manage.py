@@ -36,7 +36,7 @@ def add_uicase():
     if caseId:
         old_data = UICase.query.filter_by(id=caseId).first()
         old_num = old_data.num
-        if UICaseStep.query.filter_by(name=caseName, module_id=module_id).first() and caseName != old_data.name:
+        if UICase.query.filter_by(name=caseName, module_id=module_id).first() and caseName != old_data.name:
             return jsonify({'msg': '名字重复', 'status': 0})
 
         list_data = Module.query.filter_by(id=module_id).first().ui_cases.all()
