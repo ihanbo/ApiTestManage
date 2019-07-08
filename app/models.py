@@ -326,7 +326,6 @@ class UICase(db.Model):
     name = db.Column(db.String(256), nullable=True, comment='名称')
     num = db.Column(db.Integer(), nullable=True, comment='case序号')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
-    steps = db.relationship('UICaseStep', secondary=UicaseStepInfo, backref=db.backref('ui_case'))
 
 
 @login_manager.user_loader

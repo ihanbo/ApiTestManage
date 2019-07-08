@@ -69,9 +69,10 @@ def add_uicase():
 def updateUICaseInfo(id, steps):
     for d in UicaseStepInfo.query.filter_by(ui_case_id=id).all():
         db.session.delete(d)
-        num = 0
+
+    num = 0
     for s in steps:
-        info = UicaseStepInfo(ui_case_step_id=s.id, ui_case_id=id, num=num)
+        info = UicaseStepInfo(ui_case_step_id=s.get('id'), ui_case_id=id, num=num)
         db.session.add(info)
         db.session.commit()
         num += 1
@@ -105,12 +106,11 @@ def list_uicase():
     pagination = case_data.order_by(UICase.num.asc()).paginate(page, per_page=per_page, error_out=False)
     case_data = pagination.items
     total = pagination.total
-
     _api = [{'id': c.id,
              'num': c.num,
              'name': c.name,
              'desc': c.desc,
-             'c_steps': len(c.steps)}
+             'c_steps': len(UicaseStepInfo.query.filter_by(ui_case_id=c.id).all())}
             for c in case_data]
     return jsonify({'data': _api, 'total': total, 'status': 1})
 
