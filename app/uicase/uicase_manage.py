@@ -48,6 +48,7 @@ def add_uicase():
         old_data.platform = platform
 
         db.session.commit()
+        updateUICaseInfo(caseId, steps)
         return jsonify({'msg': '修改成功', 'status': 1, 'caseId': caseId, 'num': num})
     else:
         if UICase.query.filter_by(name=caseName, module_id=module_id).first():
@@ -59,11 +60,21 @@ def add_uicase():
                                platform=platform,
                                project_id=project_id,
                                module_id=module_id)
-
             db.session.add(new_cases)
             db.session.commit()
-
+            updateUICaseInfo(new_cases.id, steps)
             return jsonify({'msg': '新建成功', 'status': 1, 'caseId': new_cases.id, 'num': new_cases.num})
+
+
+def updateUICaseInfo(id, steps):
+    for d in UicaseStepInfo.query.filter_by(ui_case_id=id).all():
+        db.session.delete(d)
+        num = 0
+    for s in steps:
+        info = UicaseStepInfo(ui_case_step_id=s.id, ui_case_id=id, num=num)
+        db.session.add(info)
+        db.session.commit()
+        num += 1
 
 
 @api.route('/uicases/list', methods=['POST'])
@@ -109,6 +120,6 @@ def del_step_in_uicase():
     """ 删除case中的step"""
     data = request.json
     case_id = data.get('id')
-    _data = uicase_step_ct.query.filter_by(id=case_id).first()
+    _data = UicaseStepInfo.query.filter_by(id=case_id).first()
     db.session.delete(_data)
     return jsonify({'msg': '删除成功', 'status': 1})

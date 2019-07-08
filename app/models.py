@@ -291,15 +291,18 @@ class UIAction(db.Model):
         print('--' * 30)
 
 
-uicase_step_ct = db.Table('uicase_step_ct',
-                          db.Column('ui_case_step_id', db.Integer, db.ForeignKey('ui_case_step.id'), primary_key=True),
-                          db.Column('ui_case', db.Integer, db.ForeignKey('ui_case.id'), primary_key=True))
+class UicaseStepInfo(db.Model):
+    __tablename__ = 'ui_case_step_info'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    ui_case_step_id = db.Column(db.Integer, db.ForeignKey('ui_case_step.id'), comment='步骤id')
+    num = db.Column(db.Integer(), nullable=True, comment='case中step序号')
+    ui_case_id = db.Column(db.Integer, db.ForeignKey('ui_case.id'), comment='caseid')
 
 
 class UICaseStep(db.Model):
     __tablename__ = 'ui_case_step'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
-    num = db.Column(db.Integer(), nullable=True, comment='case序号')
+
     name = db.Column(db.String(128), nullable=True, comment='名称')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
     xpath = db.Column(db.String(1024), comment='定位元素路径')
@@ -323,7 +326,7 @@ class UICase(db.Model):
     name = db.Column(db.String(256), nullable=True, comment='名称')
     num = db.Column(db.Integer(), nullable=True, comment='case序号')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
-    steps = db.relationship('UICaseStep', secondary=uicase_step_ct, backref=db.backref('ui_case'))
+    steps = db.relationship('UICaseStep', secondary=UicaseStepInfo, backref=db.backref('ui_case'))
 
 
 @login_manager.user_loader
