@@ -123,3 +123,8 @@ def del_step_in_uicase():
     _data = UicaseStepInfo.query.filter_by(id=case_id).first()
     db.session.delete(_data)
     return jsonify({'msg': '删除成功', 'status': 1})
+
+
+@api.route('/uicases/delete', method=['POST'])
+def del_uicases():
+    """ 删除case"""
