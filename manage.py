@@ -37,6 +37,6 @@ def initdata():
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=9000, debug=True)
+    app.run(host='192.168.15.10', port=9000, debug=True)
     # manager.run(default_command='runserver')
     # manager.run(default_command='shell')
