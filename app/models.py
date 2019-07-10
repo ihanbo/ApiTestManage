@@ -300,6 +300,20 @@ class UicaseStepInfo(db.Model):
     ui_case_id = db.Column(db.Integer, db.ForeignKey('ui_case.id'), comment='caseid')
 
 
+def info2dic(c):
+    return {'id': c.id,
+            'num': c.num,
+            'name': c.name,
+            'desc': c.desc,
+            'xpath': c.xpath,
+            'resourceid': c.resourceid,
+            'text': c.text,
+            'action': c.action,
+            'created_time': c.created_time,
+            'update_time': c.update_time,
+            'extraParam': c.extraParam, }
+
+
 class UICaseStep(db.Model):
     __tablename__ = 'ui_case_step'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')

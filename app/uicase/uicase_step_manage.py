@@ -99,7 +99,7 @@ def del_uicase_step():
         return jsonify({'msg': '不能删除别人项目下的接口', 'status': 0})
 
     # 同步删除接口信息下对应用例下的步骤信息
-    for d in UicaseStepInfo.query.filter_by(id=case_step_id).all():
+    for d in UicaseStepInfo.query.filter_by(ui_case_step_id=case_step_id).all():
         db.session.delete(d)
 
     db.session.delete(_data)

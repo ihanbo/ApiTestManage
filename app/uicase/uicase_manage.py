@@ -128,3 +128,45 @@ def del_step_in_uicase():
 @api.route('/uicases/delete', methods=['POST'])
 def del_uicases():
     """ 删除case"""
+    data = request.json
+    case_id = data.get('id')
+    _data = UICase.query.filter_by(id=case_id).first()
+
+    project_id = Module.query.filter_by(id=_data.module_id).first().project_id
+    if current_user.id != Project.query.filter_by(id=project_id).first().user_id:
+        return jsonify({'msg': '不能删除别人项目下的case', 'status': 0})
+
+    # 同步删除接口信息下对应用例下的步骤信息
+    for d in UicaseStepInfo.query.filter_by(ui_case_id=case_id).all():
+        db.session.delete(d)
+
+    db.session.delete(_data)
+
+    return jsonify({'msg': '删除成功', 'status': 1})
+
+
+@api.route('/uicases/editAndCopy', methods=['POST'])
+def edit_uicases():
+    """ 编辑case"""
+    data = request.json
+    case_id = data.get('id')
+    _edit = UICase.query.filter_by(id=case_id).first()
+    _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
+    _steps_data = []
+    for s in _steps:
+        c = UICaseStep.query.filter_by(module_id=_edit.module_id, platform=_edit.platform, id=s.ui_case_step_id).first()
+        _steps_data.append({'id': c.id,
+                            'num': c.num,
+                            'name': c.name,
+                            'desc': c.desc})
+
+    platform = Platform.query.filter_by(id=_edit.platform).first()
+    _data = {'name': _edit.name,
+             'num': _edit.num,
+             'desc': _edit.desc,
+             'id': _edit.id,
+             'num': _edit.num,
+             'platform': platform.to_dict(),
+             # 'steps': json.loads(json.dumps(_steps_data, default=info2dic))}
+             'steps': _steps_data}
+    return jsonify({'data': _data, 'status': 1})
