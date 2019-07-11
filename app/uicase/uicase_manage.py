@@ -170,3 +170,19 @@ def edit_uicases():
              # 'steps': json.loads(json.dumps(_steps_data, default=info2dic))}
              'steps': _steps_data}
     return jsonify({'data': _data, 'status': 1})
+
+
+@api.route('/uicases/importCases', methods=['POST'])
+def import_uicases():
+    """ 导入case，目前仅支持excel"""
+    data = request.json
+    project_name = data.get('projectName')
+    module_id = data.get('moduleId')
+    if not module_id and not project_name:
+        return jsonify({'msg': '项目和模块不能为空', 'status': 0})
+    project_data = Project.query.filter_by(name=project_name).first()
+
+    import_api_address = data.get('importApiAddress')
+    if not import_api_address:
+        return jsonify({'msg': '请上传文件', 'status': 0})
+    return jsonify({'msg': '导入成功', 'status': 1})
