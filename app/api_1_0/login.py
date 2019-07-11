@@ -120,6 +120,13 @@ def checkIn():
     user = User.query.filter_by(account=user_account).first()
     if user is None:
         # return jsonify({'msg': '账号错误或不存在', 'status': 0})
+        user = User()
+        user.status = 1
+        user.id = hash(user_account)
+        user.account = user_account
+        user.name = user_name
+        user.role_id = 1
+        login_user(user, True)
         return jsonify({'msg': '登录成功', 'status': 1,'token': fake_tk,
                         'name': user_name,  'roles': 1})
     else:
