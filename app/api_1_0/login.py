@@ -116,6 +116,7 @@ def checkIn():
         data = json.loads(data)
     user_name = data.get('user_name')
     user = User.query.filter_by(account='admin').first()
+    user.verify_password('123456')
     if user is None:
         return jsonify({'msg': '账号错误或不存在', 'status': 0})
     else:
