@@ -86,7 +86,7 @@ class User(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def generate_reset_token(self, expiration=3600):
+    def generate_reset_token(self, expiration=360000):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'reset': self.id})
 
@@ -184,7 +184,7 @@ class ApiMsg(db.Model):
     extract = db.Column(db.String(2048), comment='提取信息')
     validate = db.Column(db.String(2048), comment='断言信息')
     header = db.Column(db.String(2048), comment='头部信息')
-    encrypt = db.Column(db.Boolean, nullable=False, default=False, comment='是否需要加密解密操作')
+    # encrypt = db.Column(db.Boolean, nullable=False, default=False, comment='是否需要加密解密操作')
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), comment='所属的接口模块id')
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
