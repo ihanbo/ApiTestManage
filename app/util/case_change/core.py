@@ -4,6 +4,8 @@ import logging
 import sys
 from urllib.parse import urlparse
 
+import xlrd
+
 
 def convert_list_to_dict(origin_list):
     """ convert HAR data list to mapping
@@ -211,6 +213,26 @@ class HarParser(object):
         # config = self.make_config()
         # testset.insert(0, config)
         return testset
+
+
+class Excelparser:
+    '''excel格式uicase解析'''
+
+    def __init__(self, file_path):
+        ''''''
+        self.excelFile = xlrd.open_workbook(file_path)
+        self.cases = self.parse()
+
+    def parse(self):
+        cases = []
+        if not self.excelFile:
+            print('未找到指定文件')
+        for sheet in self.excelFile.sheets():
+            '''遍历每一个sheet'''
+
+
+
+        return cases
 
 
 if __name__ == '__main__':
