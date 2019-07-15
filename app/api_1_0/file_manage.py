@@ -17,7 +17,10 @@ def api_upload():
         return jsonify({"msg": "文件已存在，请修改文件名字后再上传", "status": 0})
 
     else:
-        file.save(os.path.join(FILE_ADDRESS, file.filename))
+        toSave = os.path.join(FILE_ADDRESS, file.filename);
+        if os.path.exists(toSave):
+            os.remove(toSave)
+        file.save(toSave)
         return jsonify({'data': os.path.join(FILE_ADDRESS, file.filename), "msg": "上传成功", "status": 1})
 
 

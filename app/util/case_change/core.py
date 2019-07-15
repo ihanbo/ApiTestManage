@@ -1,4 +1,3 @@
-import base64
 import json
 import logging
 import sys
@@ -215,6 +214,25 @@ class HarParser(object):
         return testset
 
 
+class CaseStepTmp():
+    caseStepId = ''
+    caseStepname = ''
+    caseStepId = ''
+    caseStepDesc = ''
+    resourceid = ''
+    xPath = ''
+    text = ''
+    action = ''
+    param = ''
+
+
+class CaseTmp():
+    caseName = ''
+    caseDesc = ''
+    platform = ''
+    caseSteps = []
+
+
 class Excelparser:
     '''excel格式uicase解析'''
 
@@ -223,16 +241,37 @@ class Excelparser:
         self.excelFile = xlrd.open_workbook(file_path)
         self.cases = self.parse()
 
+    def data(self):
+        return self.cases
+
     def parse(self):
         cases = []
         if not self.excelFile:
             print('未找到指定文件')
         for sheet in self.excelFile.sheets():
             '''遍历每一个sheet'''
-
-
-
+            case = CaseTmp()
+            case.caseName = str(sheet.cell_value(0, 1))
+            case.caseDesc = str(sheet.cell_value(1, 1))
+            case.platform = str(sheet.cell_value(2, 1))
+            for r in range(4, sheet.nrows):
+                caseStep = CaseStepTmp()
+                caseStep.caseStepname = str(sheet.cell_value(r, 3))
+                caseStep.caseStepDesc = str(sheet.cell_value(r, 4))
+                caseStep.resourceid = str(sheet.cell_value(r, 5)).strip()
+                caseStep.xPath = str(sheet.cell_value(r, 6)).strip()
+                caseStep.text = float2Str(sheet.cell_value(r, 7))
+                caseStep.action = str(sheet.cell_value(r, 8)).strip()
+                caseStep.param = float2Str(sheet.cell_value(r, 9))
+                case.caseSteps.append(caseStep)
+            cases.append(case)
         return cases
+
+
+def float2Str(param):
+    if isinstance(param, float):
+        return str('%d' % param)
+    return param
 
 
 if __name__ == '__main__':

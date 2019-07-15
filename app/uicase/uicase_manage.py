@@ -1,7 +1,9 @@
 from flask import jsonify, request
+from flask_login import current_user
+
 from app.api_1_0 import api, login_required
 from app.models import *
-from flask_login import current_user
+from app.util.case_change.core import Excelparser
 from ..util.utils import *
 
 
@@ -172,6 +174,34 @@ def edit_uicases():
     return jsonify({'data': _data, 'status': 1})
 
 
+def importSteps(case_id, caseSteps, project_id, module_id, platform_id):
+    for d in UicaseStepInfo.query.filter_by(ui_case_id=case_id).all():
+        db.session.delete(d)
+
+    num = auto_num(0, UICaseStep, module_id=module_id)
+    numInCase = 0
+    for step in caseSteps:
+        new_case_step = UICaseStep(num=num,
+                                   name=step.caseStepname,
+                                   desc=step.caseStepDesc,
+                                   xpath=step.xPath,
+                                   resourceid=step.resourceid,
+                                   text=step.text,
+                                   action=UIAction.query.filter_by(action=step.action).first().id,
+                                   extraParam=step.param,
+                                   platform=platform_id,
+                                   project_id=project_id,
+                                   module_id=module_id)
+        db.session.add(new_case_step)
+        db.session.commit()
+
+        info = UicaseStepInfo(ui_case_step_id=new_case_step.id, ui_case_id=case_id, num=numInCase)
+        db.session.add(info)
+        db.session.commit()
+        num += 1
+        numInCase += 1
+
+
 @api.route('/uicases/importCases', methods=['POST'])
 def import_uicases():
     """ 导入case，目前仅支持excel"""
@@ -183,6 +213,25 @@ def import_uicases():
     project_data = Project.query.filter_by(name=project_name).first()
 
     import_api_address = data.get('importApiAddress')
+
+    excel = Excelparser(import_api_address).data()
+    num = auto_num(0, UICase, module_id=module_id)
+    for caseImport in excel:
+        oldCase = UICase.query.filter_by(name=caseImport.caseName).first()
+        if oldCase:
+            return jsonify({'msg': 'case已存在', 'status': 0})
+        platform = Platform.query.filter_by(p_name=caseImport.platform).first()
+        new_cases = UICase(num=num,
+                           name=caseImport.caseName,
+                           desc=caseImport.caseDesc,
+                           platform=platform.id,
+                           project_id=project_data.id,
+                           module_id=module_id)
+        db.session.add(new_cases)
+        db.session.commit()
+        num += 1
+        importSteps(new_cases.id, caseImport.caseSteps, project_data.id, module_id, platform.id)
+
     if not import_api_address:
         return jsonify({'msg': '请上传文件', 'status': 0})
     return jsonify({'msg': '导入成功', 'status': 1})
