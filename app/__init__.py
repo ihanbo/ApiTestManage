@@ -33,6 +33,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    global db
+    db = SQLAlchemy(metadata=MetaData(naming_convention=naming_convention), use_native_unicode='utf8')
     app.logger.addHandler(config_log())  # 初始化日志
     config[config_name].init_app(app)
 
