@@ -144,14 +144,47 @@ def del_project():
     data = request.json
     ids = data.get('id')
     pro_data = Project.query.filter_by(id=ids).first()
-    if current_user.id != pro_data.user_id:
-        return jsonify({'msg': '不能删除别人创建的项目', 'status': 0})
-    if pro_data.modules.all():
-        return jsonify({'msg': '请先删除项目下的接口模块', 'status': 0})
-    if pro_data.case_sets.all():
-        return jsonify({'msg': '请先删除项目下的业务集', 'status': 0})
-    if pro_data.configs.all():
-        return jsonify({'msg': '请先删除项目下的业务配置', 'status': 0})
+
+    _del_conf = Config.query.filter_by(project_id=ids).all()
+    if _del_conf:
+        for conf in _del_conf:
+            db.session.delete(conf)
+
+    _del_module = Module.query.filter_by(project_id=ids).all()
+    if _del_module:
+        for module in _del_module:
+            _del_api_msg = ApiMsg.query.filter_by(module_id=module.id, project_id=ids).all()
+            if _del_api_msg:
+                for api_msg in _del_api_msg:
+                    db.session.delete(api_msg)
+            db.session.delete(module)
+
+    _del_case_set = CaseSet.query.filter_by(project_id=ids).all()
+    if _del_case_set:
+        for case_set in _del_case_set:
+            _del_case = Case.query.filter_by(case_set_id=case_set.id, project_id=ids).all()
+            if _del_case:
+                for case in _del_case:
+                    _del_case_data = CaseData.query.filter_by(case_id=case.id).all()
+                    if _del_case_data:
+                        for case_data in _del_case_data:
+                            db.session.delete(case_data)
+                    db.session.delete(case)
+            db.session.delete(case_set)
+
+    _del_report = Report.query.filter_by(project_id=ids).all()
+    if _del_report:
+        for report in _del_report:
+            db.session.delete(report)
+
+    # if current_user.id != pro_data.user_id:
+    #     return jsonify({'msg': '不能删除别人创建的项目', 'status': 0})
+    # if pro_data.modules.all():
+    #     return jsonify({'msg': '请先删除项目下的接口模块', 'status': 0})
+    # if pro_data.case_sets.all():
+    #     return jsonify({'msg': '请先删除项目下的业务集', 'status': 0})
+    # if pro_data.configs.all():
+    #     return jsonify({'msg': '请先删除项目下的业务配置', 'status': 0})
     db.session.delete(pro_data)
     return jsonify({'msg': '删除成功', 'status': 1})
 
