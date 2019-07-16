@@ -208,6 +208,28 @@ def del_api_msg():
 
     return jsonify({'msg': '删除成功', 'status': 1})
 
+@api.route('/apiMsg/delMulti', methods=['POST'])
+@login_required
+def del_api_msgs():
+    """ 删除接口列表 """
+    data = request.json
+
+    api_msg_data = data.get('apiMsgData')
+    project_name = data.get('projectName')
+    config_id = data.get('configId')
+    if not api_msg_data:
+        return jsonify({'msg': '请勾选信息后，再进行删除', 'status': 0})
+
+    # 前端传入的数据不是按照编号来的，所以这里重新排序
+    api_ids = [item['apiMsgId'] for item in api_msg_data]
+    for api_msg_id in api_ids:
+        _data = ApiMsg.query.filter_by(id=api_msg_id).first()
+        # 同步删除接口信息下对应用例下的接口步骤信息
+        for d in CaseData.query.filter_by(api_msg_id=api_msg_id).all():
+            db.session.delete(d)
+        db.session.delete(_data)
+    return jsonify({'msg': '删除成功', 'status': 1})
+
 
 @api.route('/apiMsg/fileChange', methods=['POST'])
 @login_required

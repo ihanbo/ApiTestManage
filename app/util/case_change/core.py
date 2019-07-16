@@ -106,13 +106,15 @@ class HarParser(object):
                     [{'key': h1['key'], 'value': h1['value'], 'param_type': 'string'} for h1 in
                      query if h1])
         elif testcase_dict['method'] == 'POST':
-            if entry_json['data']:
+            postParams: dict = request['body']
+            mode = postParams.get('mode', None)
+            if mode is 'data':
                 testcase_dict['variable'] = json.dumps(
                     [{'key': h1['key'], 'value': h1['value'], 'param_type': 'string'} for h1 in
                      entry_json['data'] if h1])
-            elif entry_json.get('rawModeData'):
+            elif 'raw' in postParams:
                 testcase_dict['variable_type'] = 'json'
-                testcase_dict['json_variable'] = entry_json['rawModeData']
+                testcase_dict['json_variable'] = postParams['raw']
 
     def _make_har_request_headers(self, testcase_dict, entry_json):
         """ parse HAR entry request headers, and make testcase headers.
@@ -200,7 +202,7 @@ class HarParser(object):
                 case = self.make_testcase(entry_json)
                 testcases.append(case)
             except Exception as e:
-                print("Couldn't parse" + str(e))
+                print("Couldn't parse!!" + str(e))
 
         return testcases
 
