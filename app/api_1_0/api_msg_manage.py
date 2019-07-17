@@ -70,6 +70,19 @@ def add_api_msg():
         old_data.param = param
         old_data.extract = extract
         old_data.module_id = module_id
+
+        list_case_data = CaseData.query.filter_by(api_msg_id=api_msg_id).order_by(CaseData.num.asc()).all()
+        if list_case_data:
+            for casedata in list_case_data:
+                casedata.name = api_msg_name
+                casedata.up_func = up_func
+                casedata.down_func = down_func
+                casedata.param = param
+                casedata.variable = variable
+                casedata.json_variable = json_variable
+                casedata.extract = extract
+                casedata.validate = validate
+
         db.session.commit()
         return jsonify({'msg': '修改成功', 'status': 1, 'api_msg_id': api_msg_id, 'num': num})
     else:
