@@ -1,5 +1,6 @@
 import json
 import types
+import time
 from app.models import *
 from httprunner.api import HttpRunner
 from ..util.global_variable import *
@@ -211,6 +212,7 @@ class RunCase(object):
             for s in range(case_times):
                 _steps = {'teststeps': [], 'config': {'variables': {}, 'name': ''}}
                 _steps['config']['name'] = case_data.name
+                _steps['config']['variables']['wait_times'] = case_data.wait_times
 
                 # 获取用例的配置数据
                 _config = json.loads(case_data.variable) if case_data.variable else []
@@ -239,7 +241,20 @@ class RunCase(object):
         scheduler.app.logger.info('测试数据：{}'.format(self.TEST_DATA))
         # res = main_ate(self.TEST_DATA)
         runner = HttpRunner()
-        runner.run(self.TEST_DATA)
+        # runner.run(self.TEST_DATA)
+        # jump_res = {'success':'', 'stat':{'testcase':{'total':0,'success':0,'faile':0},
+        #                                   'teststeps':{'total':0, "failures":0, 'errors':0,'skipped':0,'expectedFailures':0, 'unexpectedSuccesses':0, 'success':0}
+        #                                   },
+        #             'time':{'start_at':0, 'duration': 0, 'start_datetime':"2019-07-17 19:17:02"}
+        #             'platform':{},
+        #             'details':{}
+        #             }
+        for case in self.TEST_DATA['testcases']:
+            tmp_case_dict = {'testcases':[{"config":case['config'], "teststeps":case['teststeps']}], 'project_mapping':self.TEST_DATA['project_mapping']}
+            # scheduler.app.logger.info('执行用例id：{}，执行用例名称：{}')
+            runner.run(tmp_case_dict)
+            time.sleep(case['config']['variables']['wait_times'] / 1000)
+            scheduler.app.logger.info('执行后等待时间：{}'.format(case['config']['variables']['wait_times'] / 1000))
         jump_res = json.dumps(runner._summary, ensure_ascii=False, default=encode_object, cls=JSONEncoder)
         # scheduler.app.logger.info('返回数据：{}'.format(jump_res))
         return jump_res

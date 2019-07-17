@@ -160,6 +160,7 @@ class Case(db.Model):
     func_address = db.Column(db.String(256), comment='用例需要引用的函数')
     variable = db.Column(db.Text(), comment='用例公共参数')
     times = db.Column(db.Integer(), nullable=True, comment='执行次数')
+    wait_times = db.Column(db.Integer(), nullable=True, comment='等待时间')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
     case_set_id = db.Column(db.Integer, db.ForeignKey('case_set.id'), comment='所属的用例集id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
