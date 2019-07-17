@@ -3,7 +3,7 @@ from flask_login import current_user
 from app.models import *
 from app.util.case_change.core import HarParser
 from . import api, login_required
-from ..util.http_run import RunCase
+from ..util.http_run import RunCase, os
 from ..util.utils import *
 
 
@@ -251,7 +251,18 @@ def file_change():
     import_api_address = data.get('importApiAddress')
     if not import_api_address:
         return jsonify({'msg': '请上传文件', 'status': 0})
-    har_parser = HarParser(import_api_address, import_format)
+    (filepath, tempfilename) = os.path.split(import_api_address)
+    (filename, extension) = os.path.splitext(tempfilename)
+    if  extension !='.har' and extension !='.json':
+        return jsonify({'msg': '文件格式有误，请重新上传', 'status': 0})
+    #解析文件-判断文件格式
+    checkinfo =  check_file(import_api_address, import_format)
+    if  checkinfo:
+        return checkinfo
+    try:
+        har_parser = HarParser(import_api_address, import_format)
+    except Exception:
+        return jsonify({'msg': '文件内容解析错误，请检查后重新上传', 'status': 0})
     case_num = auto_num(data.get('caseNum'), ApiMsg, module_id=module_id)
     for msg in har_parser.testset:
         # status_url = msg['test']['url'].replace(msg['test']['name'], '')
@@ -268,3 +279,9 @@ def file_change():
         db.session.commit()
         case_num += 1
     return jsonify({'msg': '导入成功', 'status': 1})
+
+def check_file(import_api_address, file_type):
+    with open(import_api_address, "r+", encoding="utf-8") as f:
+        if len(f.read()) == 0:
+            return jsonify({'msg': '文件内容为空，请检查后重新上传', 'status': 0})
+    f.close()
