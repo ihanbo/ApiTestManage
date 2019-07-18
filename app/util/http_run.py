@@ -254,25 +254,38 @@ class RunCase(object):
         db.session.commit()
         #gen_result_detail(jump_res, project_id, report_id, new_result_summary.id)
 
-    def gen_result_detail(self, jump_res, project_id, report_id, report_summary_id):
+    def gen_result_detail(self, jump_res, proid, repid, rep_sum_id):
         for case in jump_res:
             case_name = jump_res['detail']['name']
-            tmp_case = Case.query.filter_by(name = case_name).first()
-            case_id = tmp_case['id']
+            case_id = Case.query.filter_by(name = case_name).first().id
             case_exec_status = jump_res['stat']['testcases']['success']
             case_duration = jump_res['time']['duration']
-
-        # case_data_id =
-        # case_data_name =
-        # api_msg_id =
-        # api_msg_name =
-        # api_exec_status =
-        # response_time =
-        # project_id =
-        # result_summary_id =
-
-        pass
-
+            for casedata in case['detail']['records']:
+                case_data_name = casedata['name']
+                case_data_id = CaseData.query.filter_by(name = case_data_name).first().id
+                api_msg_name = casedata['meta_datas']['name']
+                api_msg_id = ApiMsg.query.filter_by(name = api_msg_name).first().id
+                api_exec_status = casedata['status']
+                response_time = casedata['sta']['response_time_ms']
+                report_id = repid
+                project_id = proid
+                result_summary_id = rep_sum_id
+                new_result_detail = ResultDetail(
+                    case_id = case_id,
+                    case_name = case_name,
+                    case_exec_status = case_exec_status,
+                    case_duration = case_duration,
+                    case_data_id = case_data_id,
+                    case_data_name = case_data_name,
+                    api_msg_id = api_msg_id,
+                    api_msg_name = api_msg_name,
+                    api_exec_status = api_exec_status,
+                    response_time = response_time,
+                    project_id = project_id,
+                    report_id = report_id,
+                    result_summary_id = result_summary_id,)
+                db.session.add(new_result_detail)
+        db.session.commit()
 
     def run_case(self):
         scheduler.app.logger.info('测试数据：{}'.format(self.TEST_DATA))

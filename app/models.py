@@ -374,34 +374,12 @@ class ResultDetail(db.Model):
     api_exec_status = db.Column(db.Boolean, nullable=True, default=True, comment='接口执行状态')
     response_time = db.Column(db.Float(), nullable=True, comment="接口响应时间")
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
+    report_id = db.Column(db.Integer, db.ForeignKey('report.id'), comment='报告id')
     result_summary_id = db.Column(db.ForeignKey('result_summary.id'), comment='报告id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
-class ResultStep(db.Model):
-    __tablename__ = 'result_step'
-    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
-    num = db.Column(db.Integer(), nullable=True, comment='步骤序号，执行顺序按序号来')
-    status = db.Column(db.String(16), comment='状态，true表示执行，false表示不执行')
-    name = db.Column(db.String(128), comment='步骤名称')
-    up_func = db.Column(db.String(256), comment='步骤执行前的函数')
-    down_func = db.Column(db.String(256), comment='步骤执行后的函数')
-    time = db.Column(db.Integer(), default=1, comment='执行次数')
-    param = db.Column(db.Text(), default=u'[]')
-    status_param = db.Column(db.String(64), default=u'[true, true]')
-    variable = db.Column(db.Text())
-    json_variable = db.Column(db.Text())
-    status_variables = db.Column(db.String(64))
-    extract = db.Column(db.String(2048))
-    status_extract = db.Column(db.String(64))
-    validate = db.Column(db.String(2048))
-    status_validate = db.Column(db.String(64))
-    case_id = db.Column(db.Integer, db.ForeignKey('case.id'))
-    api_msg_id = db.Column(db.Integer, db.ForeignKey('api_msg.id'))
-    created_time = db.Column(db.DateTime, index=True, default=datetime.now)
-    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
-
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+

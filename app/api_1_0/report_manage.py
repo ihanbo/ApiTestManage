@@ -26,8 +26,8 @@ def run_cases():
     jump_res = d.run_case()
     if data.get('reportStatus'):
         d.build_report(jump_res, case_ids)
-        #report_id = d.build_report(jump_res, case_ids)
-        #d.gen_result_summary(jump_res, project_id, report_id)
+        report_id = d.build_report(jump_res, case_ids)
+        d.gen_result_summary(jump_res, project_id, report_id)
     res = json.loads(jump_res)
 
     return jsonify({'msg': '测试完成', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
@@ -116,6 +116,3 @@ def find_report():
                'create_time': str(c.create_time).split('.')[0]} for c in report]
 
     return jsonify({'data': report, 'total': total, 'status': 1})
-
-
-# END
