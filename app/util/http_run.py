@@ -1,5 +1,6 @@
 import json
 import types
+import time
 from app.models import *
 from httprunner.api import HttpRunner
 from ..util.global_variable import *
@@ -211,6 +212,7 @@ class RunCase(object):
             for s in range(case_times):
                 _steps = {'teststeps': [], 'config': {'variables': {}, 'name': ''}}
                 _steps['config']['name'] = case_data.name
+                _steps['config']['variables']['wait_times'] = case_data.wait_times
 
                 # 获取用例的配置数据
                 _config = json.loads(case_data.variable) if case_data.variable else []
@@ -234,12 +236,82 @@ class RunCase(object):
         self.new_report_id = new_report.id
         with open('{}{}.txt'.format(REPORT_ADDRESS, self.new_report_id), 'w') as f:
             f.write(jump_res)
+        #return self.new_report_id
+
+    def gen_result_summary(self, jump_res, project_id, report_id):
+        new_result_summary = ResultSummary(case_total = jump_res['stat']['testcases']['total'],
+            case_success = jump_res['stat']['testcases']['success'],
+            case_fail = jump_res['stat']['testcases']['fail'],
+            step_total = jump_res['stat']['testcases']['total'],
+            step_successes = jump_res['stat']['testcases']['total'],
+            step_failures = jump_res['stat']['testcases']['total'],
+            step_errors = jump_res['stat']['testcases']['total'],
+            start_datetime = jump_res['time']['start_datetime'],
+            duration = jump_res['time']['duration'],
+            project_id = project_id,
+            report_id = report_id,)
+        db.session.add(new_result_summary)
+        db.session.commit()
+        #gen_result_detail(jump_res, project_id, report_id, new_result_summary.id)
+
+    def gen_result_detail(self, jump_res, project_id, report_id, report_summary_id):
+        for case in jump_res:
+            case_name = jump_res['detail']['name']
+            tmp_case = Case.query.filter_by(name = case_name).first()
+            case_id = tmp_case['id']
+            case_exec_status = jump_res['stat']['testcases']['success']
+            case_duration = jump_res['time']['duration']
+
+        # case_data_id =
+        # case_data_name =
+        # api_msg_id =
+        # api_msg_name =
+        # api_exec_status =
+        # response_time =
+        # project_id =
+        # result_summary_id =
+
+        pass
+
 
     def run_case(self):
         scheduler.app.logger.info('测试数据：{}'.format(self.TEST_DATA))
         # res = main_ate(self.TEST_DATA)
         runner = HttpRunner()
-        runner.run(self.TEST_DATA)
-        jump_res = json.dumps(runner._summary, ensure_ascii=False, default=encode_object, cls=JSONEncoder)
+        # runner.run(self.TEST_DATA)
+        jump_res = {'success': True,
+                    'stat':{'testcases':{'total':0, 'success':0, 'fail':0},
+                            'teststeps':{'total':0, "failures":0, 'errors':0, 'skipped':0,'expectedFailures':0, 'unexpectedSuccesses':0, 'successes':0}
+                            },
+                    'time':{'start_at':0, 'duration': 0, 'start_datetime':"2019-07-17 19:17:02"},
+                    'platform':{},
+                    'details':[]
+                    }
+        for index, case in enumerate(self.TEST_DATA['testcases']):
+            tmp_case_dict = {'testcases':[{"config":case['config'], "teststeps":case['teststeps']}], 'project_mapping':self.TEST_DATA['project_mapping']}
+            # scheduler.app.logger.info('执行用例id：{}，执行用例名称：{}')
+            runner.run(tmp_case_dict)
+            time.sleep(case['config']['variables']['wait_times'] / 1000)
+            tmp_jump_res = runner._summary
+            if not tmp_jump_res['success']:
+                jump_res['success'] = False
+            jump_res['stat']['testcases']['total'] += tmp_jump_res['stat']['testcases']['total']
+            jump_res['stat']['testcases']['success'] += tmp_jump_res['stat']['testcases']['success']
+            jump_res['stat']['testcases']['fail'] += tmp_jump_res['stat']['testcases']['fail']
+            jump_res['stat']['teststeps']['total'] += tmp_jump_res['stat']['teststeps']['total']
+            jump_res['stat']['teststeps']['failures'] += tmp_jump_res['stat']['teststeps']['failures']
+            jump_res['stat']['teststeps']['errors'] += tmp_jump_res['stat']['teststeps']['errors']
+            jump_res['stat']['teststeps']['skipped'] += tmp_jump_res['stat']['teststeps']['skipped']
+            jump_res['stat']['teststeps']['expectedFailures'] += tmp_jump_res['stat']['teststeps']['expectedFailures']
+            jump_res['stat']['teststeps']['unexpectedSuccesses'] += tmp_jump_res['stat']['teststeps']['unexpectedSuccesses']
+            jump_res['stat']['teststeps']['successes'] += tmp_jump_res['stat']['teststeps']['successes']
+            if index == 0:
+                jump_res['time']['start_at'] = tmp_jump_res['time']['start_at']
+                jump_res['time']['start_datetime'] = tmp_jump_res['time']['start_datetime']
+            jump_res['time']['duration']  += tmp_jump_res['time']['duration']
+            jump_res['details'] += tmp_jump_res['details']
+            scheduler.app.logger.info('执行后等待时间：{}'.format(case['config']['variables']['wait_times'] / 1000))
+        scheduler.app.logger.info('返回数据：{}'.format(jump_res))
+        summary = json.dumps(jump_res, ensure_ascii=False, default=encode_object, cls=JSONEncoder)
         # scheduler.app.logger.info('返回数据：{}'.format(jump_res))
-        return jump_res
+        return summary

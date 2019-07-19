@@ -6,7 +6,7 @@ from app.models import *
 from ..util.http_run import RunCase
 from ..util.global_variable import *
 from ..util.report.report import render_html_report
-
+from app import scheduler
 
 @api.route('/report/run', methods=['POST'])
 @login_required
@@ -24,9 +24,10 @@ def run_cases():
     d = RunCase(project_id)
     d.get_case_test(case_ids)
     jump_res = d.run_case()
-
     if data.get('reportStatus'):
         d.build_report(jump_res, case_ids)
+        #report_id = d.build_report(jump_res, case_ids)
+        #d.gen_result_summary(jump_res, project_id, report_id)
     res = json.loads(jump_res)
 
     return jsonify({'msg': '测试完成', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
