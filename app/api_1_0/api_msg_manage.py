@@ -1,9 +1,10 @@
+
 from flask import jsonify, request
 from flask_login import current_user
 from app.models import *
 from app.util.case_change.core import HarParser
 from . import api, login_required
-from ..util.http_run import RunCase
+from ..util.http_run import RunCase, os
 from ..util.utils import *
 
 
@@ -28,6 +29,7 @@ def add_api_msg():
     status_url = data.get('choiceUrl')
     variable = data.get('variable')
     json_variable = data.get('jsonVariable')
+    charge_name = current_user.name
     param = data.get('param')
     if not project_name:
         return jsonify({'msg': '项目不能为空', 'status': 0})
@@ -70,19 +72,6 @@ def add_api_msg():
         old_data.param = param
         old_data.extract = extract
         old_data.module_id = module_id
-
-        list_case_data = CaseData.query.filter_by(api_msg_id=api_msg_id).order_by(CaseData.num.asc()).all()
-        if list_case_data:
-            for casedata in list_case_data:
-                casedata.name = api_msg_name
-                casedata.up_func = up_func
-                casedata.down_func = down_func
-                casedata.param = param
-                casedata.variable = variable
-                casedata.json_variable = json_variable
-                casedata.extract = extract
-                casedata.validate = validate
-
         db.session.commit()
         return jsonify({'msg': '修改成功', 'status': 1, 'api_msg_id': api_msg_id, 'num': num})
     else:
@@ -105,7 +94,9 @@ def add_api_msg():
                                status_url=status_url,
                                variable_type=variable_type,
                                json_variable=json_variable,
-                               extract=extract, )
+                               extract=extract,
+                               charge_name=charge_name,
+                               is_execute=0)
             db.session.add(new_cases)
             db.session.commit()
             return jsonify({'msg': '新建成功', 'status': 1, 'api_msg_id': new_cases.id, 'num': new_cases.num})
@@ -147,11 +138,20 @@ def run_api_msg():
     api_ids.sort(key=lambda x: x[0])
     # api_data = [ApiMsg.query.filter_by(id=c[1]).first() for c in api_ids]
     api_ids = [c[1] for c in api_ids]
-
     project_id = Project.query.filter_by(name=project_name).first().id
     d = RunCase(project_id)
     d.get_api_test(api_ids, config_id)
     res = json.loads(d.run_case())
+
+    api_num = 0
+    if len(api_ids) > 0:
+        for api_id in api_ids:
+            #保存接口测试结果信息
+            old_data = ApiMsg.query.filter_by(id=api_id).first()
+            old_data.is_execute = 1
+            old_data.save_result = str(res.get('details')[0].get('records')[api_num])
+            api_num += 1
+            db.session.commit()
 
     return jsonify({'msg': '测试完成', 'data': res, 'status': 1})
 
@@ -194,10 +194,13 @@ def find_api_msg():
              'extract': json.loads(c.extract),
              'validate': json.loads(c.validate),
              'param': json.loads(c.param),
+             'charge_name': c.charge_name,
+             'save_result': c.save_result,
+             'is_execute': c.is_execute,
              'statusCase': {'extract': [True, True], 'variable': [True, True],
                             'validate': [True, True], 'param': [True, True]},
              'status': True, 'case_name': c.name, 'down_func': c.down_func, 'up_func': c.up_func, 'time': 1}
-            for c in api_data]
+             for c in api_data]
     return jsonify({'data': _api, 'total': total, 'status': 1})
 
 
@@ -264,7 +267,18 @@ def file_change():
     import_api_address = data.get('importApiAddress')
     if not import_api_address:
         return jsonify({'msg': '请上传文件', 'status': 0})
-    har_parser = HarParser(import_api_address, import_format)
+    (filepath, tempfilename) = os.path.split(import_api_address)
+    (filename, extension) = os.path.splitext(tempfilename)
+    if  extension !='.har' and extension !='.json':
+        return jsonify({'msg': '文件格式有误，请重新上传', 'status': 0})
+    #解析文件-判断文件格式
+    checkinfo =  check_file(import_api_address, import_format)
+    if  checkinfo:
+        return checkinfo
+    try:
+        har_parser = HarParser(import_api_address, import_format)
+    except Exception:
+        return jsonify({'msg': '文件内容解析错误，请检查后重新上传', 'status': 0})
     case_num = auto_num(data.get('caseNum'), ApiMsg, module_id=module_id)
     for msg in har_parser.testset:
         # status_url = msg['test']['url'].replace(msg['test']['name'], '')
@@ -281,3 +295,9 @@ def file_change():
         db.session.commit()
         case_num += 1
     return jsonify({'msg': '导入成功', 'status': 1})
+
+def check_file(import_api_address, file_type):
+    with open(import_api_address, "r+", encoding="utf-8") as f:
+        if len(f.read()) == 0:
+            return jsonify({'msg': '文件内容为空，请检查后重新上传', 'status': 0})
+    f.close()

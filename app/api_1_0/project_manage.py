@@ -1,9 +1,11 @@
+
 from flask import jsonify, request
 from . import api
 from app.models import *
 import json
 from ..util.custom_decorator import login_required
 from flask_login import current_user
+from ..util.http_run import RunCase, os
 
 
 @api.route('/proGather/list')
@@ -136,6 +138,43 @@ def add_project():
             db.session.commit()
             return jsonify({'msg': '新建成功', 'status': 1})
 
+@api.route('/project/runProject', methods=['POST'])
+@login_required
+def run_project():
+    """运行项目"""
+    data = request.json
+    project_id = data.get('id')
+    #获取当前项目下的接口id
+    api_ids = db.session.query(ApiMsg.id).filter_by(project_id=project_id).all()
+    if len(api_ids) == 0:
+        return jsonify({'msg': '该项目下没有可执行的接口，请检查后重新运行', 'status': 1})
+
+    api_id_list = []
+    for api in api_ids:
+        api_id_list.append(api[0])
+
+    config_id = db.session.query(Config.id).filter_by(project_id=project_id).all()
+
+    try:
+        d = RunCase(project_id)
+        d.get_api_test(api_id_list, config_id)
+        d.run_case()
+        res = json.loads(d.run_case())
+
+        api_num = 0
+        if len(api_ids) > 0 and len(res) > 0 :
+            for api_id in api_ids:
+                # 保存接口测试结果信息
+                old_data = ApiMsg.query.filter_by(id=api_id).first()
+                old_data.is_execute = 1
+                old_data.save_result = str(res.get('details')[0].get('records')[api_num])
+                api_num += 1
+                db.session.commit()
+    except Exception as e:
+        return jsonify({'error': '运行错误，请查看详细信息：'+ str(e), 'status': 1})
+
+    return jsonify({'msg': '执行完成', 'status': 0})
+
 
 @api.route('/project/del', methods=['POST'])
 @login_required
@@ -144,47 +183,14 @@ def del_project():
     data = request.json
     ids = data.get('id')
     pro_data = Project.query.filter_by(id=ids).first()
-
-    _del_conf = Config.query.filter_by(project_id=ids).all()
-    if _del_conf:
-        for conf in _del_conf:
-            db.session.delete(conf)
-
-    _del_module = Module.query.filter_by(project_id=ids).all()
-    if _del_module:
-        for module in _del_module:
-            _del_api_msg = ApiMsg.query.filter_by(module_id=module.id, project_id=ids).all()
-            if _del_api_msg:
-                for api_msg in _del_api_msg:
-                    db.session.delete(api_msg)
-            db.session.delete(module)
-
-    _del_case_set = CaseSet.query.filter_by(project_id=ids).all()
-    if _del_case_set:
-        for case_set in _del_case_set:
-            _del_case = Case.query.filter_by(case_set_id=case_set.id, project_id=ids).all()
-            if _del_case:
-                for case in _del_case:
-                    _del_case_data = CaseData.query.filter_by(case_id=case.id).all()
-                    if _del_case_data:
-                        for case_data in _del_case_data:
-                            db.session.delete(case_data)
-                    db.session.delete(case)
-            db.session.delete(case_set)
-
-    _del_report = Report.query.filter_by(project_id=ids).all()
-    if _del_report:
-        for report in _del_report:
-            db.session.delete(report)
-
-    # if current_user.id != pro_data.user_id:
-    #     return jsonify({'msg': '不能删除别人创建的项目', 'status': 0})
-    # if pro_data.modules.all():
-    #     return jsonify({'msg': '请先删除项目下的接口模块', 'status': 0})
-    # if pro_data.case_sets.all():
-    #     return jsonify({'msg': '请先删除项目下的业务集', 'status': 0})
-    # if pro_data.configs.all():
-    #     return jsonify({'msg': '请先删除项目下的业务配置', 'status': 0})
+    if current_user.id != pro_data.user_id:
+        return jsonify({'msg': '不能删除别人创建的项目', 'status': 0})
+    if pro_data.modules.all():
+        return jsonify({'msg': '请先删除项目下的接口模块', 'status': 0})
+    if pro_data.case_sets.all():
+        return jsonify({'msg': '请先删除项目下的业务集', 'status': 0})
+    if pro_data.configs.all():
+        return jsonify({'msg': '请先删除项目下的业务配置', 'status': 0})
     db.session.delete(pro_data)
     return jsonify({'msg': '删除成功', 'status': 1})
 

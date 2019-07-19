@@ -160,11 +160,11 @@ class Case(db.Model):
     func_address = db.Column(db.String(256), comment='用例需要引用的函数')
     variable = db.Column(db.Text(), comment='用例公共参数')
     times = db.Column(db.Integer(), nullable=True, comment='执行次数')
-    wait_times = db.Column(db.Integer(), nullable=True, comment='等待时间')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
     case_set_id = db.Column(db.Integer, db.ForeignKey('case_set.id'), comment='所属的用例集id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+    charge_name = db.Column(db.String(128), nullable=True, comment='测试负责人')
 
 
 class ApiMsg(db.Model):
@@ -190,7 +190,9 @@ class ApiMsg(db.Model):
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
-
+    charge_name = db.Column(db.String(128), nullable=True, comment='测试负责人')
+    is_execute = db.Column(db.Integer(), nullable=True, default=0, comment='是否执行过：1已执行、0未执行')
+    save_result = db.Column(db.String(), nullable=True, comment='保存结果信息')
 
 class CaseData(db.Model):
     __tablename__ = 'case_data'
@@ -223,6 +225,42 @@ class Report(db.Model):
     read_status = db.Column(db.String(16), nullable=True, comment='阅读状态')
     project_id = db.Column(db.String(16), nullable=True)
     create_time = db.Column(db.DateTime(), index=True, default=datetime.now)
+
+class ResultSummary(db.Model):
+    __tablename__ = 'result_summary'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    case_total = db.Column(db.Integer(), nullable=True, comment='用例总数')
+    case_success = db.Column(db.Integer(), nullable=True, comment='成功用例数')
+    case_fail = db.Column(db.Integer(), nullable=True, comment='失败用例数')
+    step_total = db.Column(db.Integer(), nullable=True, comment='步骤总数')
+    step_successes = db.Column(db.Integer(), nullable=True, comment='成功步骤数')
+    step_failures = db.Column(db.Integer(), nullable=True, comment='失败步骤数')
+    step_errors = db.Column(db.Integer(), nullable=True, comment='错误步骤数')
+    start_datetime = db.Column(db.DateTime, index=True, default=datetime.now,comment='用例开始时间')
+    duration = db.Column(db.Float(), nullable=True, comment="用例持续时间")
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
+    report_id =  db.Column(db.Integer, db.ForeignKey('report.id'), comment='报告id')
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now)
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
+class ResultDetail(db.Model):
+    __tablename__ = 'result_detail'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    case_id = db.Column(db.ForeignKey('case.id'), comment='用例id')
+    case_name = db.Column(db.String(128), nullable=True, comment='用例名称')
+    case_exec_status = db.Column(db.Boolean, nullable=True, default=True, comment='用例执行状态')
+    case_duration = db.Column(db.Float(), nullable=True, comment="用例持续时间")
+    case_data_id = db.Column(db.Integer(),  db.ForeignKey('case_data.id'), comment='用例步骤id')
+    case_data_name = db.Column(db.String(128), nullable=True, comment='用例步骤名称')
+    api_msg_id = db.Column(db.Integer, db.ForeignKey('api_msg.id'))
+    api_msg_name = db.Column(db.String(128), nullable=True, comment='接口名称')
+    api_exec_status = db.Column(db.String(128), nullable=True, default=True, comment='接口执行状态')
+    response_time = db.Column(db.Float(), nullable=True, comment="接口响应时间")
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
+    report_id = db.Column(db.Integer, db.ForeignKey('report.id'), comment='报告id')
+    result_summary_id = db.Column(db.ForeignKey('result_summary.id'), comment='报告id')
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now)
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
 
 class Task(db.Model):
@@ -343,43 +381,7 @@ class UICase(db.Model):
     num = db.Column(db.Integer(), nullable=True, comment='case序号')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
 
-class ResultSummary(db.Model):
-    __tablename__ = 'result_summary'
-    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
-    case_total = db.Column(db.Integer(), nullable=True, comment='用例总数')
-    case_success = db.Column(db.Integer(), nullable=True, comment='成功用例数')
-    case_fail = db.Column(db.Integer(), nullable=True, comment='失败用例数')
-    step_total = db.Column(db.Integer(), nullable=True, comment='步骤总数')
-    step_successes = db.Column(db.Integer(), nullable=True, comment='成功步骤数')
-    step_failures = db.Column(db.Integer(), nullable=True, comment='失败步骤数')
-    step_errors = db.Column(db.Integer(), nullable=True, comment='错误步骤数')
-    start_datetime = db.Column(db.DateTime, index=True, default=datetime.now,comment='用例开始时间')
-    duration = db.Column(db.Float(), nullable=True, comment="用例持续时间")
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
-    report_id =  db.Column(db.Integer, db.ForeignKey('report.id'), comment='报告id')
-    created_time = db.Column(db.DateTime, index=True, default=datetime.now)
-    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
-
-class ResultDetail(db.Model):
-    __tablename__ = 'result_detail'
-    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
-    case_id = db.Column(db.ForeignKey('case.id'), comment='用例id')
-    case_name = db.Column(db.String(128), nullable=True, comment='用例名称')
-    case_exec_status = db.Column(db.Boolean, nullable=True, default=True, comment='用例执行状态')
-    case_duration = db.Column(db.Float(), nullable=True, comment="用例持续时间")
-    case_data_id = db.Column(db.Integer(),  db.ForeignKey('case_data.id'), comment='用例步骤id')
-    case_data_name = db.Column(db.String(128), nullable=True, comment='用例步骤名称')
-    api_msg_id = db.Column(db.Integer, db.ForeignKey('api_msg.id'))
-    api_msg_name = db.Column(db.String(128), nullable=True, comment='接口名称')
-    api_exec_status = db.Column(db.String(128), nullable=True, default=True, comment='接口执行状态')
-    response_time = db.Column(db.Float(), nullable=True, comment="接口响应时间")
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
-    report_id = db.Column(db.Integer, db.ForeignKey('report.id'), comment='报告id')
-    result_summary_id = db.Column(db.ForeignKey('result_summary.id'), comment='报告id')
-    created_time = db.Column(db.DateTime, index=True, default=datetime.now)
-    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-

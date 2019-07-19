@@ -1,6 +1,8 @@
+
 import json
 import logging
 import sys
+import ssl
 from urllib.parse import urlparse
 
 import xlrd
@@ -29,12 +31,20 @@ def load_api_log_entries(file_path, file_type):
         try:
             content_json = json.loads(f.read())
             if file_type == 'har':
-                return content_json["log"]["entries"]
+                if content_json["log"]["entries"]:
+                    return content_json["log"]["entries"]
+                else:
+                    raise  KeyError ({'msg': '文件内容缺少entries节点，请检查后重新上传', 'status': 0})
             elif file_type == 'json':
-                return content_json['item']
-        except (KeyError, TypeError):
-            logging.error("api_1_0 file content error: {}".format(file_path))
-            sys.exit(1)
+                if content_json['item']:
+                    return content_json['item']
+                else:
+                    raise KeyError ({'msg': '文件内容缺少item节点，请检查后重新上传', 'status': 0})
+        #except (KeyError, TypeError):
+        except (KeyError, TypeError) :
+            #logging.error("api_1_0 file content error: {}".format(file_path))
+            raise KeyError({'msg': '文件内容解析错误，请检查后重新上传', 'status': 0})
+            #sys.exit(1)
 
 
 class HarParser(object):
@@ -58,10 +68,13 @@ class HarParser(object):
     ]
 
     def __init__(self, file_path, file_type='har'):
-        self.log_entries = load_api_log_entries(file_path, file_type)
-        self.user_agent = None
-        self.file_type = file_type
-        self.testset = self.make_testset()
+        try:
+            self.log_entries = load_api_log_entries(file_path, file_type)
+            self.user_agent = None
+            self.file_type = file_type
+            self.testset = self.make_testset()
+        except KeyError as e:
+            raise Exception(e)
 
     def _make_har_request_url(self, testcase_dict, entry_json):
         """ parse HAR entry request url and queryString, and make testcase url and params
