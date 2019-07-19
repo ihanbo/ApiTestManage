@@ -25,7 +25,7 @@ def run_cases():
     d.get_case_test(case_ids)
     jump_res = d.run_case()
     if data.get('reportStatus'):
-        d.build_report(jump_res, case_ids)
+        #d.build_report(jump_res, case_ids)
         report_id = d.build_report(jump_res, case_ids)
         d.gen_result_summary(jump_res, project_id, report_id)
     res = json.loads(jump_res)
@@ -51,8 +51,11 @@ def get_report():
     report_data = Report.query.filter_by(id=report_id).first()
     report_data.read_status = '已读'
     db.session.commit()
-    with open(_address, 'r') as f:
-        d = json.loads(f.read())
+    with open(_address, 'r', encoding='utf8') as f:
+        try:
+            d = json.loads(f.read())
+        except Exception as e:
+            scheduler.app.logger.info('返回数据：{}'.format(e))
 
     if state == 'success':
         _d = copy.deepcopy(d['details'])

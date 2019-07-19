@@ -188,6 +188,7 @@ class RunCase(object):
         """
         scheduler.app.logger.info('本次测试的接口id：{}'.format(api_ids))
         _steps = {'teststeps': [], 'config': {'variables': {}}, 'output': ['phone']}
+        _steps['config']['variables']['wait_times'] = 0
 
         if config_id:
             config_data = Config.query.filter_by(id=config_id).first()
@@ -234,39 +235,46 @@ class RunCase(object):
         db.session.commit()
 
         self.new_report_id = new_report.id
-        with open('{}{}.txt'.format(REPORT_ADDRESS, self.new_report_id), 'w') as f:
+        with open('{}{}.txt'.format(REPORT_ADDRESS, self.new_report_id), 'w',encoding='utf-8') as f:
             f.write(jump_res)
-        #return self.new_report_id
+        return self.new_report_id
 
     def gen_result_summary(self, jump_res, project_id, report_id):
-        new_result_summary = ResultSummary(case_total = jump_res['stat']['testcases']['total'],
-            case_success = jump_res['stat']['testcases']['success'],
-            case_fail = jump_res['stat']['testcases']['fail'],
-            step_total = jump_res['stat']['testcases']['total'],
-            step_successes = jump_res['stat']['testcases']['total'],
-            step_failures = jump_res['stat']['testcases']['total'],
-            step_errors = jump_res['stat']['testcases']['total'],
-            start_datetime = jump_res['time']['start_datetime'],
-            duration = jump_res['time']['duration'],
+        jump_res_dict = json.loads(jump_res)
+        new_result_summary = ResultSummary(case_total = jump_res_dict['stat']['testcases']['total'],
+            case_success = jump_res_dict['stat']['testcases']['success'],
+            case_fail = jump_res_dict['stat']['testcases']['fail'],
+            step_total = jump_res_dict['stat']['teststeps']['total'],
+            step_successes = jump_res_dict['stat']['teststeps']['successes'],
+            step_failures = jump_res_dict['stat']['teststeps']['failures'],
+            step_errors = jump_res_dict['stat']['teststeps']['errors'],
+            start_datetime = datetime.strptime(jump_res_dict['time']['start_datetime'],"%Y-%m-%d %H:%M:%S"),
+            duration = jump_res_dict['time']['duration'],
             project_id = project_id,
             report_id = report_id,)
         db.session.add(new_result_summary)
         db.session.commit()
-        #gen_result_detail(jump_res, project_id, report_id, new_result_summary.id)
+        report_summary_id = new_result_summary.id
+        try:
+            self.gen_result_detail(jump_res, project_id, report_id, report_summary_id)
+        except Exception as e:
+            scheduler.app.logger.info('gen_result_summary{}'.format(e))
 
     def gen_result_detail(self, jump_res, proid, repid, rep_sum_id):
-        for case in jump_res:
-            case_name = jump_res['detail']['name']
+        jump_res_dict = json.loads(jump_res)
+        scheduler.app.logger.info('jump_res_dict.{}'.format(jump_res_dict))
+        for case in jump_res_dict['details']:
+            case_name = case['name']
             case_id = Case.query.filter_by(name = case_name).first().id
-            case_exec_status = jump_res['stat']['testcases']['success']
-            case_duration = jump_res['time']['duration']
-            for casedata in case['detail']['records']:
+            case_exec_status = case['success']
+            case_duration = case['time']['duration']
+            for casedata in case['records']:
                 case_data_name = casedata['name']
                 case_data_id = CaseData.query.filter_by(name = case_data_name).first().id
                 api_msg_name = casedata['meta_datas']['name']
                 api_msg_id = ApiMsg.query.filter_by(name = api_msg_name).first().id
                 api_exec_status = casedata['status']
-                response_time = casedata['sta']['response_time_ms']
+                response_time = casedata['response_time']
                 report_id = repid
                 project_id = proid
                 result_summary_id = rep_sum_id
@@ -304,7 +312,9 @@ class RunCase(object):
             tmp_case_dict = {'testcases':[{"config":case['config'], "teststeps":case['teststeps']}], 'project_mapping':self.TEST_DATA['project_mapping']}
             # scheduler.app.logger.info('执行用例id：{}，执行用例名称：{}')
             runner.run(tmp_case_dict)
-            time.sleep(case['config']['variables']['wait_times'] / 1000)
+            waittimes = case['config']['variables']['wait_times']
+            if waittimes != 0:
+                time.sleep(case['config']['variables']['wait_times'] / 1000)
             tmp_jump_res = runner._summary
             if not tmp_jump_res['success']:
                 jump_res['success'] = False
@@ -324,7 +334,6 @@ class RunCase(object):
             jump_res['time']['duration']  += tmp_jump_res['time']['duration']
             jump_res['details'] += tmp_jump_res['details']
             scheduler.app.logger.info('执行后等待时间：{}'.format(case['config']['variables']['wait_times'] / 1000))
-        scheduler.app.logger.info('返回数据：{}'.format(jump_res))
         summary = json.dumps(jump_res, ensure_ascii=False, default=encode_object, cls=JSONEncoder)
         # scheduler.app.logger.info('返回数据：{}'.format(jump_res))
         return summary

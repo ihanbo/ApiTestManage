@@ -371,7 +371,7 @@ class ResultDetail(db.Model):
     case_data_name = db.Column(db.String(128), nullable=True, comment='用例步骤名称')
     api_msg_id = db.Column(db.Integer, db.ForeignKey('api_msg.id'))
     api_msg_name = db.Column(db.String(128), nullable=True, comment='接口名称')
-    api_exec_status = db.Column(db.Boolean, nullable=True, default=True, comment='接口执行状态')
+    api_exec_status = db.Column(db.String(128), nullable=True, default=True, comment='接口执行状态')
     response_time = db.Column(db.Float(), nullable=True, comment="接口响应时间")
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
     report_id = db.Column(db.Integer, db.ForeignKey('report.id'), comment='报告id')
