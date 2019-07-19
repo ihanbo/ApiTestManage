@@ -16,6 +16,7 @@ def add_case():
     desc = data.get('desc')
     ids = data.get('ids')
     times = data.get('times')
+    charge_name = current_user.name
     case_set_id = data.get('caseSetId')
     func_address = json.dumps(data.get('funcAddress'))
     project = data.get('project')
@@ -104,7 +105,8 @@ def add_case():
         else:
 
             new_case = Case(num=num, name=name, desc=desc, project_id=project_id, variable=variable,
-                            func_address=func_address, case_set_id=case_set_id, times=times)
+                            func_address=func_address, case_set_id=case_set_id, times=times,
+                            charge_name=charge_name)
             db.session.add(new_case)
             db.session.commit()
             case_id = new_case.id
@@ -148,8 +150,10 @@ def find_case():
         pagination = cases.order_by(Case.num.asc()).paginate(page, per_page=per_page, error_out=False)
         cases = pagination.items
         total = pagination.total
-    cases = [{'num': c.num, 'name': c.name, 'label': c.name, 'leaf': True, 'desc': c.desc, 'sceneId': c.id}
-             for c in cases]
+    cases = [{'num': c.num, 'name': c.name,
+              'charge_name':c.charge_name,
+              'label': c.name, 'leaf': True, 'desc': c.desc, 'sceneId': c.id}
+              for c in cases]
     return jsonify({'data': cases, 'total': total, 'status': 1})
 
 

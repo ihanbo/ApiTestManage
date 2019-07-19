@@ -28,6 +28,7 @@ def add_api_msg():
     status_url = data.get('choiceUrl')
     variable = data.get('variable')
     json_variable = data.get('jsonVariable')
+    charge_name = current_user.name
     param = data.get('param')
     if not project_name:
         return jsonify({'msg': '项目不能为空', 'status': 0})
@@ -92,7 +93,9 @@ def add_api_msg():
                                status_url=status_url,
                                variable_type=variable_type,
                                json_variable=json_variable,
-                               extract=extract, )
+                               extract=extract,
+                               charge_name=charge_name,
+                               is_execute=0)
             db.session.add(new_cases)
             db.session.commit()
             return jsonify({'msg': '新建成功', 'status': 1, 'api_msg_id': new_cases.id, 'num': new_cases.num})
@@ -134,11 +137,20 @@ def run_api_msg():
     api_ids.sort(key=lambda x: x[0])
     # api_data = [ApiMsg.query.filter_by(id=c[1]).first() for c in api_ids]
     api_ids = [c[1] for c in api_ids]
-
     project_id = Project.query.filter_by(name=project_name).first().id
     d = RunCase(project_id)
     d.get_api_test(api_ids, config_id)
     res = json.loads(d.run_case())
+
+    api_num = 0
+    if len(api_ids) > 0:
+        for api_id in api_ids:
+            #保存接口测试结果信息
+            old_data = ApiMsg.query.filter_by(id=api_id).first()
+            old_data.is_execute = 1
+            old_data.save_result = str(res.get('details')[0].get('records')[api_num])
+            api_num += 1
+            db.session.commit()
 
     return jsonify({'msg': '测试完成', 'data': res, 'status': 1})
 
@@ -181,10 +193,13 @@ def find_api_msg():
              'extract': json.loads(c.extract),
              'validate': json.loads(c.validate),
              'param': json.loads(c.param),
+             'charge_name': c.charge_name,
+             'save_result': c.save_result,
+             'is_execute': c.is_execute,
              'statusCase': {'extract': [True, True], 'variable': [True, True],
                             'validate': [True, True], 'param': [True, True]},
              'status': True, 'case_name': c.name, 'down_func': c.down_func, 'up_func': c.up_func, 'time': 1}
-            for c in api_data]
+             for c in api_data]
     return jsonify({'data': _api, 'total': total, 'status': 1})
 
 

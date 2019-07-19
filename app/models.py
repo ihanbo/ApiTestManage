@@ -164,6 +164,7 @@ class Case(db.Model):
     case_set_id = db.Column(db.Integer, db.ForeignKey('case_set.id'), comment='所属的用例集id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+    charge_name = db.Column(db.String(128), nullable=True, comment='测试负责人')
 
 
 class ApiMsg(db.Model):
@@ -189,7 +190,9 @@ class ApiMsg(db.Model):
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
-
+    charge_name = db.Column(db.String(128), nullable=True, comment='测试负责人')
+    is_execute = db.Column(db.Integer(), nullable=True, default=0, comment='是否执行过：1已执行、0未执行')
+    save_result = db.Column(db.String(), nullable=True, comment='保存结果信息')
 
 class CaseData(db.Model):
     __tablename__ = 'case_data'
