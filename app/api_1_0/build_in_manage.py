@@ -23,7 +23,6 @@ def get_func():
 
 
 @api.route('/func/getAddress', methods=['POST'])
-@login_required
 def get_funcs():
     """ 查找所以函数文件 """
     for root, dirs, files in os.walk(os.path.abspath('.') + r'/func_list'):
