@@ -1,6 +1,7 @@
 # encoding: utf-8
 import os
 from flask import Flask
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import config
@@ -32,6 +33,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 def create_app(config_name):
     app = Flask(__name__)
+    CORS(app, supports_credentials=True)
     app.config.from_object(config[config_name])
     # global db
     # db = SQLAlchemy(metadata=MetaData(naming_convention=naming_convention), use_native_unicode='utf8')
