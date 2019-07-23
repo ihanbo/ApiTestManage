@@ -145,35 +145,22 @@ def run_project():
     data = request.json
     project_id = data.get('id')
     #获取当前项目下的接口id
-    api_ids = db.session.query(ApiMsg.id).filter_by(project_id=project_id).all()
-    if len(api_ids) == 0:
+    case_ids = db.session.query(Case.id).filter_by(project_id=project_id).all()
+    if len(case_ids) == 0:
         return jsonify({'msg': '该项目下没有可执行的接口，请检查后重新运行', 'status': 1})
+    case_id_list = []
+    for api in case_ids:
+        case_id_list.append(api[0])
+    d = RunCase(project_id)
+    d.get_case_test(case_id_list)
+    jump_res = d.run_case()
+    if data.get('reportStatus'):
+        # d.build_report(jump_res, case_ids)
+        report_id = d.build_report(jump_res, case_ids)
+        d.gen_result_summary(jump_res, project_id, report_id)
+    res = json.loads(jump_res)
 
-    api_id_list = []
-    for api in api_ids:
-        api_id_list.append(api[0])
-
-    config_id = db.session.query(Config.id).filter_by(project_id=project_id).all()
-
-    try:
-        d = RunCase(project_id)
-        d.get_api_test(api_id_list, config_id)
-        d.run_case()
-        res = json.loads(d.run_case())
-
-        api_num = 0
-        if len(api_ids) > 0 and len(res) > 0 :
-            for api_id in api_ids:
-                # 保存接口测试结果信息
-                old_data = ApiMsg.query.filter_by(id=api_id).first()
-                old_data.is_execute = 1
-                old_data.save_result = str(res.get('details')[0].get('records')[api_num])
-                api_num += 1
-                db.session.commit()
-    except Exception as e:
-        return jsonify({'error': '运行错误，请查看详细信息：'+ str(e), 'status': 1})
-
-    return jsonify({'msg': '执行完成', 'status': 0})
+    return jsonify({'msg': '测试完成', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
 
 
 @api.route('/project/del', methods=['POST'])

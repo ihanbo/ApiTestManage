@@ -3,7 +3,23 @@ from . import api, login_required
 from app.models import *
 from flask_login import current_user
 from ..util.utils import *
+from ..util.http_run import RunCase
 
+
+@api.route('/caseSet/addEnvironment', methods=['POST'])
+@login_required
+def edit_environment_set():
+    #修改用例环境
+    data = request.json
+    choice = data.get('choice')
+    set_id = data.get('setId')
+    if set_id:
+        old_data = CaseSet.query.filter_by(id=set_id).first()
+        old_data.environment_choice = choice
+        db.session.commit()
+        return jsonify({'msg': '修改成功', 'status': 1})
+    else:
+        return jsonify({'msg': '修改失败', 'status': 0})
 
 @api.route('/caseSet/add', methods=['POST'])
 @login_required
@@ -66,7 +82,7 @@ def find_set():
     pagination = all_sets.paginate(page, per_page=per_page, error_out=False)
     _items = pagination.items
     total = pagination.total
-    current_set = [{'label': s.name, 'id': s.id} for s in _items]
+    current_set = [{'label': s.name, 'id': s.id, 'choice': s.environment_choice} for s in _items]
     all_set = [{'label': s.name, 'id': s.id} for s in all_sets.all()]
     return jsonify({'status': 1, 'total': total, 'data': current_set, 'all_set': all_set})
 
@@ -81,6 +97,30 @@ def edit_set():
     _data = {'name': _edit.name, 'num': _edit.num}
 
     return jsonify({'data': _data, 'status': 1})
+
+@api.route('/caseSet/run', methods=['POST'])
+@login_required
+def run_set():
+    """用例接口调试"""
+    data = request.json
+    set_id = data.get('case_Id')
+    projectName = data.get('projectName')
+    case_ids = db.session.query(Case.id).filter_by(case_set_id = set_id).all()
+    if len(case_ids) == 0:
+        return jsonify({'msg': '该用例下没有可执行的接口，请检查后重新运行', 'status': 1})
+    case_set_ids = []
+    for case_id in case_ids:
+        case_set_ids.append(case_id[0])
+    project_id = Project.query.filter_by(name=projectName).first().id
+    d = RunCase(project_id)
+    d.get_case_test(case_set_ids)
+    jump_res = d.run_case()
+    if data.get('reportStatus'):
+        #d.build_report(jump_res, case_ids)
+        report_id = d.build_report(jump_res, case_set_ids)
+        d.gen_result_summary(jump_res, project_id, report_id)
+    res = json.loads(jump_res)
+    return jsonify({'msg': '运行完成，请查看测试报告结果', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
 
 
 @api.route('/caseSet/del', methods=['POST'])
