@@ -1,4 +1,3 @@
-
 from flask import jsonify, request
 from . import api, login_required
 from app.models import *
@@ -17,7 +16,7 @@ def add_case():
     desc = data.get('desc')
     ids = data.get('ids')
     times = data.get('times')
-    charge_name = current_user.name
+    wait_times = data.get('waitTimes')
     case_set_id = data.get('caseSetId')
     func_address = json.dumps(data.get('funcAddress'))
     project = data.get('project')
@@ -54,6 +53,7 @@ def add_case():
             num_sort(num, old_num, list_data, old_data)
             old_data.name = name
             old_data.times = times
+            old_data.wait_times = wait_times
             old_data.project_id = project_id
             old_data.desc = desc
             old_data.case_set_id = case_set_id
@@ -106,8 +106,7 @@ def add_case():
         else:
 
             new_case = Case(num=num, name=name, desc=desc, project_id=project_id, variable=variable,
-                            func_address=func_address, case_set_id=case_set_id, times=times,
-                            charge_name=charge_name)
+                            func_address=func_address, case_set_id=case_set_id, times=times, wait_times = wait_times)
             db.session.add(new_case)
             db.session.commit()
             case_id = new_case.id
@@ -151,10 +150,8 @@ def find_case():
         pagination = cases.order_by(Case.num.asc()).paginate(page, per_page=per_page, error_out=False)
         cases = pagination.items
         total = pagination.total
-    cases = [{'num': c.num, 'name': c.name,
-              'charge_name':c.charge_name,
-              'label': c.name, 'leaf': True, 'desc': c.desc, 'sceneId': c.id}
-              for c in cases]
+    cases = [{'num': c.num, 'name': c.name, 'label': c.name, 'leaf': True, 'desc': c.desc, 'sceneId': c.id}
+             for c in cases]
     return jsonify({'data': cases, 'total': total, 'status': 1})
 
 
@@ -221,7 +218,7 @@ def edit_case():
                                          'validate': json.loads(case.status_validate),
                                          'param': json.loads(case.status_param)}, })
     _data2 = {'num': _data.num, 'name': _data.name, 'desc': _data.desc, 'cases': case_data, 'setId': _data.case_set_id,
-              'func_address': json.loads(_data.func_address), 'times': _data.times}
+              'func_address': json.loads(_data.func_address), 'times': _data.times, 'wait_times':_data.wait_times}
     if _data.variable:
         _data2['variable'] = json.loads(_data.variable)
     else:

@@ -213,7 +213,7 @@ class RunCase(object):
             for s in range(case_times):
                 _steps = {'teststeps': [], 'config': {'variables': {}, 'name': ''}}
                 _steps['config']['name'] = case_data.name
-                _steps['config']['variables']['wait_times'] = case_data.wait_times
+                _steps['config']['variables']['wait_times'].wait_times
 
                 # 获取用例的配置数据
                 _config = json.loads(case_data.variable) if case_data.variable else []
