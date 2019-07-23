@@ -14,7 +14,8 @@ def aps_test(project_id, case_ids, send_address=None, send_password=None, task_t
     d = RunCase(project_id)
     d.get_case_test(case_ids)
     jump_res = d.run_case()
-    d.build_report(jump_res, case_ids)
+    report_id = d.build_report(jump_res, case_ids)
+    d.gen_result_summary(jump_res, project_id, report_id)
     res = json.loads(jump_res)
 
     if send_address:

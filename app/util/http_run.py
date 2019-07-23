@@ -308,6 +308,7 @@ class RunCase(object):
                     'platform':{},
                     'details':[]
                     }
+
         for index, case in enumerate(self.TEST_DATA['testcases']):
             tmp_case_dict = {'testcases':[{"config":case['config'], "teststeps":case['teststeps']}], 'project_mapping':self.TEST_DATA['project_mapping']}
             # scheduler.app.logger.info('执行用例id：{}，执行用例名称：{}')
