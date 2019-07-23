@@ -136,6 +136,7 @@ def find_case():
     data = request.json
     project_name = data.get('projectName')
     case_name = data.get('caseName')
+    caseSetName = data.get('caseSetName')
     set_id = data.get('setId')
     page = data.get('page') if data.get('page') else 1
     per_page = data.get('sizePage') if data.get('sizePage') else 10

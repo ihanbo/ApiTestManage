@@ -147,6 +147,7 @@ class CaseSet(db.Model):
     name = db.Column(db.String(256), nullable=True, comment='用例集名称')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
     cases = db.relationship('Case', order_by='Case.num.asc()', lazy='dynamic')
+    environment_choice = db.Column(db.String(16), comment='环境选择，first为测试，以此类推')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
