@@ -160,7 +160,7 @@ def run_project():
         d.gen_result_summary(jump_res, project_id, report_id)
     res = json.loads(jump_res)
 
-    return jsonify({'msg': '测试完成', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
+    return jsonify({'msg': '执行完成，请查看执行结果', 'status': 0, 'data': {'report_id': d.new_report_id, 'data': res}})
 
 
 @api.route('/project/del', methods=['POST'])
