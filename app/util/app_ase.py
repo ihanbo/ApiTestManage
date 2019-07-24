@@ -87,6 +87,5 @@ def app_decrypt(target):
 
 if __name__ == '__main__':
     app_encrypt('中国')
-    app_encrypt('13401089058')
     app_decrypt('N8CPDrrrTyKDwBkixqgTmg==')
-    app_decrypt('lVq_rdD_lmIcvY2ezvtHBA==')
+
