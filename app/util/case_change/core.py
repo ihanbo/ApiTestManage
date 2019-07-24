@@ -269,6 +269,7 @@ class Excelparser:
             case.caseName = str(sheet.cell_value(0, 1))
             case.caseDesc = str(sheet.cell_value(1, 1))
             case.platform = str(sheet.cell_value(2, 1))
+            case.caseSteps = []
             for r in range(4, sheet.nrows):
                 caseStep = CaseStepTmp()
                 caseStep.caseStepname = str(sheet.cell_value(r, 3))

@@ -1,8 +1,10 @@
-from flask import jsonify, request
+from flask import jsonify, request, session
 from flask_login import current_user
 
 from app.api_1_0 import api, login_required
 from app.models import *
+from app.uicase import ui_run
+from app.uicase.ui_run import DpAppTests
 from app.util.case_change.core import Excelparser
 from ..util.utils import *
 
@@ -38,7 +40,8 @@ def add_uicase():
     if caseId:
         old_data = UICase.query.filter_by(id=caseId).first()
         old_num = old_data.num
-        if UICase.query.filter_by(name=caseName, module_id=module_id).first() and caseName != old_data.name:
+        if UICase.query.filter_by(name=caseName,
+                                  module_id=module_id).first() and caseName != old_data.name:
             return jsonify({'msg': '名字重复', 'status': 0})
 
         list_data = Module.query.filter_by(id=module_id).first().ui_cases.all()
@@ -65,7 +68,8 @@ def add_uicase():
             db.session.add(new_cases)
             db.session.commit()
             updateUICaseInfo(new_cases.id, steps)
-            return jsonify({'msg': '新建成功', 'status': 1, 'caseId': new_cases.id, 'num': new_cases.num})
+            return jsonify(
+                {'msg': '新建成功', 'status': 1, 'caseId': new_cases.id, 'num': new_cases.num})
 
 
 def updateUICaseInfo(id, steps):
@@ -105,7 +109,8 @@ def list_uicase():
             return jsonify({'msg': '没有该接口信息', 'status': 0})
     else:
         case_data = UICase.query.filter_by(module_id=module_id, platform=platform)
-    pagination = case_data.order_by(UICase.num.asc()).paginate(page, per_page=per_page, error_out=False)
+    pagination = case_data.order_by(UICase.num.asc()).paginate(page, per_page=per_page,
+                                                               error_out=False)
     case_data = pagination.items
     total = pagination.total
     _api = [{'id': c.id,
@@ -156,7 +161,8 @@ def edit_uicases():
     _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
     _steps_data = []
     for s in _steps:
-        c = UICaseStep.query.filter_by(module_id=_edit.module_id, platform=_edit.platform, id=s.ui_case_step_id).first()
+        c = UICaseStep.query.filter_by(module_id=_edit.module_id, platform=_edit.platform,
+                                       id=s.ui_case_step_id).first()
         _steps_data.append({'id': c.id,
                             'num': c.num,
                             'name': c.name,
@@ -172,6 +178,31 @@ def edit_uicases():
              # 'steps': json.loads(json.dumps(_steps_data, default=info2dic))}
              'steps': _steps_data}
     return jsonify({'data': _data, 'status': 1})
+
+
+@api.route('/uicases/run_ui_case', methods=['POST'])
+def run_ui_cases():
+    """ run case"""
+    data = request.json
+    case_id = data.get('id')
+    _case = UICase.query.filter_by(id=case_id).first()
+    _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
+    _steps_data = []
+    for s in _steps:
+        c: UICaseStep = UICaseStep.query.filter_by(module_id=_case.module_id,
+                                                   platform=_case.platform,
+                                                   id=s.ui_case_step_id).first()
+        st = {}
+        st.update(c.__dict__)
+        st['action'] = c.ui_action.action
+        _steps_data.append(st)
+    if _steps_data is None:
+        return jsonify({'data': '未找到用例', 'status': 0})
+    dat = DpAppTests(_case.__dict__, _steps_data)
+    status, desc = dat.setUp()
+    if status == 1:
+        dat.start()
+    return jsonify({'data': desc, 'status': status})
 
 
 def importSteps(case_id, caseSteps, project_id, module_id, platform_id):

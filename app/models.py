@@ -302,6 +302,7 @@ class UIAction(db.Model):
     id = db.Column(db.Integer, primary_key=True, comment='主键，自增')
     action = db.Column(db.String(64), comment='行为', unique=True)
     action_name = db.Column(db.String(64), comment='行为名称')
+    ui_steps = db.relationship('UICaseStep', back_populates='ui_action')
 
     def action_to_dict(self):
         '''将对象转换为字典数据'''
@@ -365,12 +366,15 @@ class UICaseStep(db.Model):
     resourceid = db.Column(db.String(256), comment='定位元素id')
     text = db.Column(db.String(256), comment='定位元素文本')
     action = db.Column(db.Integer, db.ForeignKey('ui_action.id'), comment='case行为')
+    ui_action = db.relationship('UIAction', back_populates='ui_steps')
     extraParam = db.Column(db.String(256), comment='描述')
     platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), comment='所属的接口模块id')
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
+
 
 
 class UICase(db.Model):
