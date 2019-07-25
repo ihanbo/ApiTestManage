@@ -156,7 +156,7 @@ def run_project():
     jump_res = d.run_case()
     if data.get('reportStatus'):
         # d.build_report(jump_res, case_ids)
-        report_id = d.build_report(jump_res, case_ids)
+        report_id = d.build_report(jump_res, case_id_list)
         d.gen_result_summary(jump_res, project_id, report_id)
     res = json.loads(jump_res)
 
