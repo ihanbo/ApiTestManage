@@ -263,36 +263,43 @@ class RunCase(object):
     def gen_result_detail(self, jump_res, proid, repid, rep_sum_id):
         jump_res_dict = json.loads(jump_res)
         scheduler.app.logger.info('jump_res_dict.{}'.format(jump_res_dict))
-        for case in jump_res_dict['details']:
+        for index, case in enumerate(jump_res_dict['details']):
             case_name = case['name']
             case_id = Case.query.filter_by(name = case_name).first().id
             case_exec_status = case['success']
             case_duration = case['time']['duration']
-            for casedata in case['records']:
-                case_data_name = casedata['name']
-                case_data_id = CaseData.query.filter_by(name = case_data_name).first().id
-                api_msg_name = casedata['meta_datas']['name']
-                api_msg_id = ApiMsg.query.filter_by(name = api_msg_name).first().id
-                api_exec_status = casedata['status']
-                response_time = casedata['response_time']
-                report_id = repid
-                project_id = proid
-                result_summary_id = rep_sum_id
-                new_result_detail = ResultDetail(
-                    case_id = case_id,
-                    case_name = case_name,
-                    case_exec_status = case_exec_status,
-                    case_duration = case_duration,
-                    case_data_id = case_data_id,
-                    case_data_name = case_data_name,
-                    api_msg_id = api_msg_id,
-                    api_msg_name = api_msg_name,
-                    api_exec_status = api_exec_status,
-                    response_time = response_time,
-                    project_id = project_id,
-                    report_id = report_id,
-                    result_summary_id = result_summary_id,)
-                db.session.add(new_result_detail)
+            if case['records']:
+                for casedata in case['records']:
+                    case_data_name = casedata['name']
+                    case_data_id = CaseData.query.filter_by(name = case_data_name).first().id
+                    api_msg_id = CaseData.query.filter_by(name = case_data_name).first().api_msg_id
+                    api_msg_name = ApiMsg.query.filter_by(id=api_msg_id).first().name
+                    api_exec_status = casedata['status']
+                    if api_exec_status == 'error':
+                        response_time = float(0)
+                    else:
+                        response_time = float(casedata['response_time'])
+                    report_id = repid
+                    project_id = proid
+                    result_summary_id = rep_sum_id
+                    new_result_detail = ResultDetail(
+                        case_id = case_id,
+                        case_name = case_name,
+                        case_exec_status = case_exec_status,
+                        case_duration = case_duration,
+                        case_data_id = case_data_id,
+                        case_data_name = case_data_name,
+                        api_msg_id = api_msg_id,
+                        api_msg_name = api_msg_name,
+                        api_exec_status = api_exec_status,
+                        response_time = response_time,
+                        project_id = project_id,
+                        report_id = report_id,
+                        result_summary_id = result_summary_id,)
+                    try:
+                        db.session.add(new_result_detail)
+                    except Exception as a:
+                        scheduler.app.logger.info('异常信息：{}'.format(a))
         db.session.commit()
 
     def run_case(self):
