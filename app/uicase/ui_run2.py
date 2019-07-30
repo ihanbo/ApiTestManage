@@ -13,9 +13,6 @@ from app.models import UICaseStep, UICase, UicaseStepInfo, UICaseReport
 from app.uicase.driverSetting import driver, getDriver
 from app.uicase.ui_action import BaseOperate
 
-PATH = lambda p: os.path.abspath(
-    os.path.join(os.path.dirname(__file__), p)
-)
 
 isRunning = False
 dr = None
@@ -120,6 +117,17 @@ class DpAppTests(threading.Thread):
             return False, '无效行', None
         print('执行 desc = {0},index={1},action={2}'.format(step['desc'], self.case['id'],
                                                           step['action']))
+        if step['resourceid']:
+            return actionOp.click_by_id(step['resourceid'], reportName=reportName,
+                                        stepName=step['name'])
+        elif step['xpath']:
+            return actionOp.click_by_xpath(step['xpath'], reportName=reportName,
+                                           stepName=step['name'])
+        elif step['text']:
+            return actionOp.click_by_text(step['text'], reportName=reportName,
+                                          stepName=step['name'])
+
+
         global actionOp
         if step['action']:
             if step['action'] == 'click':
