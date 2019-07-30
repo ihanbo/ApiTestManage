@@ -3,7 +3,7 @@ from flask_login import current_user
 
 from app.api_1_0 import api, login_required
 from app.models import *
-from app.uicase import ui_run
+from app.uicase import ui_run, ui_run2
 from app.uicase.ui_run import DpAppTests
 from app.util.case_change.core import Excelparser
 from ..util.utils import *
@@ -197,12 +197,14 @@ def run_ui_cases():
         st['action'] = c.ui_action.action
         _steps_data.append(st)
     if _steps_data is None:
-        return jsonify({'data': '未找到用例', 'status': 0})
-    dat = DpAppTests(_case.__dict__, _steps_data)
-    status, desc = dat.setUp()
+        return jsonify({'msg': '未找到用例', 'status': 0})
+
+    status, desc = ui_run2.setUp()
     if status == 1:
-        dat.start()
-    return jsonify({'data': desc, 'status': status})
+        ui_run2.run_ui_case(_case.__dict__, _steps_data)
+    return jsonify({'msg': desc, 'status': status})
+
+
 
 
 def importSteps(case_id, caseSteps, project_id, module_id, platform_id):
