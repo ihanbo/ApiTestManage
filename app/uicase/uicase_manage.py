@@ -3,7 +3,7 @@ from flask_login import current_user
 
 from app.api_1_0 import api, login_required
 from app.models import *
-from app.uicase import ui_run, ui_run2
+from app.uicase import ui_run, ui_run2, android_engine
 from app.uicase.ui_run import DpAppTests
 from app.util.case_change.core import Excelparser
 from ..util.utils import *
@@ -196,15 +196,31 @@ def run_ui_cases():
         st.update(c.__dict__)
         st['action'] = c.ui_action.action
         _steps_data.append(st)
+
+    # _steps['teststeps'] = [self.assemble_step(api_id, None, self.pro_base_url, False) for api_id in api_ids]
+
     if _steps_data is None:
         return jsonify({'msg': '未找到用例', 'status': 0})
 
-    status, desc = ui_run2.setUp()
-    if status == 1:
-        ui_run2.run_ui_case(_case.__dict__, _steps_data)
-    return jsonify({'msg': desc, 'status': status})
+    succ, desc = android_engine.setUp()
+    if succ:
+        android_engine.run_ui_case(_case.__dict__, _steps_data)
+    return jsonify({'msg': desc, 'status': 1 if succ else 0})
 
 
+def assemble_step(case_id) -> dict:
+    _case = UICase.query.filter_by(id=case_id).first()
+    _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
+    _steps_data = []
+    for s in _steps:
+        c: UICaseStep = UICaseStep.query.filter_by(module_id=_case.module_id,
+                                                   platform=_case.platform,
+                                                   id=s.ui_case_step_id).first()
+        st = {}
+        st.update(c.__dict__)
+        st['action'] = c.ui_action.action
+        _steps_data.append(st)
+    return {'case': _case, 'steps': _steps_data}
 
 
 def importSteps(case_id, caseSteps, project_id, module_id, platform_id):
