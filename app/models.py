@@ -392,6 +392,19 @@ class UICase(db.Model):
     num = db.Column(db.Integer(), nullable=True, comment='case序号')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
 
+class UICaseReport(db.Model):
+    __tablename__ = 'ui_case_report'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
+    module_id = db.Column(db.Integer, db.ForeignKey('module.id'), comment='所属的接口模块id')
+    platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
+    read_status = db.Column(db.String(16), nullable=True, comment='阅读状态')
+    name = db.Column(db.String(256), nullable=True, comment='名称')
+    desc = db.Column(db.String(256), nullable=True, comment='描述')
+    report_dir = db.Column(db.String(256), nullable=True, comment='报告存储目录')
+    result = db.Column(db.String(), nullable=True, comment='json结果数据')
+    create_time = db.Column(db.DateTime(), index=True, default=datetime.now)
+
 
 @login_manager.user_loader
 def load_user(user_id):
