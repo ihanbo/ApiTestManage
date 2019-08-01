@@ -17,16 +17,19 @@ def add_case():
     ids = data.get('ids')
     times = data.get('times')
     wait_times = data.get('waitTimes')
-    case_set_id = data.get('caseSetId')
+    # case_set_id = data.get('caseSetId')
+    case_set_name = data.get('caseSetName')
     func_address = json.dumps(data.get('funcAddress'))
     project = data.get('project')
     project_data = Project.query.filter_by(name=project).first()
     project_id = project_data.id
     variable = data.get('variable')
     api_cases = data.get('apiCases')
-    merge_variable = json.dumps(json.loads(variable) + json.loads(project_data.variables))
-    _temp_check = extract_variables(convert(json.loads(merge_variable)))
-    if not case_set_id:
+    _temp_check = []
+    if project_data.variables:
+        merge_variable = json.dumps(json.loads(variable) + json.loads(project_data.variables))
+        _temp_check = extract_variables(convert(json.loads(merge_variable)))
+    if not case_set_name:
         return jsonify({'msg': '请选择用例集', 'status': 0})
     if re.search('\${(.*?)}', '{}{}'.format(variable, json.dumps(api_cases)), flags=0) and not func_address:
         return jsonify({'msg': '参数引用函数后，必须引用函数文件', 'status': 0})
@@ -40,6 +43,7 @@ def add_case():
     variable_check = check_case(variable, func_address)
     # if variable_check:
     #     return jsonify({'msg': variable_check, 'status': 0})
+    case_set_id = CaseSet.query.filter_by(name=case_set_name).first().id
 
     num = auto_num(data.get('num'), Case, project_id=project_id, case_set_id=case_set_id)
     if ids:
