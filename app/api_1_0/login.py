@@ -120,7 +120,6 @@ def checkIn():
     if user is None:
         return jsonify({'msg': '账号错误或不存在', 'status': 0})
     else:
-        user.name = user_name;
         login_user(user, True)
         token = user.generate_reset_token()
         token = bytes.decode(token)

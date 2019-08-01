@@ -40,7 +40,8 @@ class RunCase(object):
         :param project_data:
         :return:
         """
-        self.TEST_DATA['project_mapping']['variables'] = {h['key']: h['value'] for h in
+        if project_data.variables:
+            self.TEST_DATA['project_mapping']['variables'] = {h['key']: h['value'] for h in
                                                           json.loads(project_data.variables) if h.get('key')}
         if project_data.func_file:
             self.extract_func([project_data.func_file.replace('.py', '')])
