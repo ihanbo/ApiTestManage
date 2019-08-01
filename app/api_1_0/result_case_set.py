@@ -1,8 +1,7 @@
 from flask import jsonify, request
 from . import api,login_required
 from app.models import *
-from sqlalchemy import distinct, func
-import time
+from sqlalchemy import func
 
 @api.route('/resultCaseSet/find', methods=['POST'])
 @login_required
