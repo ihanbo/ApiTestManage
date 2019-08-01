@@ -3,9 +3,9 @@ import copy
 from flask import jsonify, request
 from . import api, login_required
 from app.models import *
-from app import scheduler
 
 @api.route('/resultSummary/find', methods=['POST'])
+@login_required
 def find_result_summary():
     data = request.json
     project_name = data.get('projectName')
@@ -23,6 +23,6 @@ def find_result_summary():
     total = pagination.total
     _data = [{'id': c.id, 'caseTotal': c.case_total, 'caseSuccess': c.case_success, 'caseFail': c.case_fail, 'caseSuccessRate':"{:.2%}".format(c.case_success / c.case_total), \
               'stepTotal': c.step_total, 'stepSuccesses': c.step_successes, 'stepFailures':c.step_failures, 'step_errors':c.step_errors, 'stepSuccessRate':"{:.2%}".format(c.step_successes / c.step_total), \
-              'startDatetime':str(c.start_datetime), 'projectId':c.project_id, 'projetName':project_name, 'reportId':c.report_id}
+              'startDatetime':str(c.start_datetime),'duration':c.duration, 'projectId':c.project_id, 'projetName':project_name, 'reportId':c.report_id}
              for c in summary]
     return jsonify({'data': _data, 'total': total, 'status': 1})
