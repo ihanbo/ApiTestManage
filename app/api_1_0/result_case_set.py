@@ -8,7 +8,7 @@ from sqlalchemy import distinct, func
 def find_result_case_set():
     data = request.json
     project_name = data.get('projectName')
-    project_id = Project.query.filter_by(project_name=project_name).first()
+    project_id = Project.query.filter_by(project_name=project_name).first().id
     report_id = data.get('reportId')
     case_set_id = data.get('caseSetId')
 
