@@ -6,7 +6,7 @@ def resp_decrypt(res):
             for casedata in case['records']:
                 if int(casedata['meta_datas']['data'][0]['response']['json']['status']) == 1:
                     for data in casedata['meta_datas']['data']:
-                        if data.get('response').get('json').get('data').get('priceList'):
+                        if 'get_car_price_list' in data['request']['url']:
                             target = data['response']['json']['data']['priceList']
                             data['response']['json']['data']['priceList'] = app_decrypt(target, 'caf86ffe6814454096572dcdffacd2b4')
                         else:
