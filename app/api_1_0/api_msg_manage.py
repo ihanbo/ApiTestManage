@@ -144,8 +144,6 @@ def run_api_msg():
     d.get_api_test(api_ids, config_id)
     res = json.loads(d.run_case())
 
-    resp_decrypt(res)
-
     api_num = 0
     if len(api_ids) > 0:
         for api_id in api_ids:
@@ -156,6 +154,7 @@ def run_api_msg():
             api_num += 1
             db.session.commit()
 
+    resp_decrypt(res)
     return jsonify({'msg': '测试完成', 'data': res, 'status': 1})
 
 

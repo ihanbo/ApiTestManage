@@ -33,9 +33,7 @@ def run_cases():
         report_id = d.build_report(jump_res, case_ids)
         d.gen_result_summary(jump_res, project_id, report_id)
     res = json.loads(jump_res)
-
     resp_decrypt(res)
-
     return jsonify(
         {'msg': '测试完成', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
 
