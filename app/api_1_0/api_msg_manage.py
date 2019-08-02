@@ -6,6 +6,7 @@ from app.util.case_change.core import HarParser
 from . import api, login_required
 from ..util.http_run import RunCase, os
 from ..util.utils import *
+from ..util.response_decrypt import *
 
 
 @api.route('/apiMsg/add', methods=['POST'])
@@ -142,6 +143,8 @@ def run_api_msg():
     d = RunCase(project_id)
     d.get_api_test(api_ids, config_id)
     res = json.loads(d.run_case())
+
+    resp_decrypt(res)
 
     api_num = 0
     if len(api_ids) > 0:
