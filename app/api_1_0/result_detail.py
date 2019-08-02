@@ -3,6 +3,7 @@ from . import api,login_required
 from app.models import *
 
 @api.route('/resultDetail/find', methods=['POST'])
+@login_required
 def find_result_detail():
     data = request.json
     project_name = data.get('projectName')
@@ -18,8 +19,8 @@ def find_result_detail():
     pagination = detail_data.order_by(ResultDetail.id.desc()).paginate(page, per_page=per_page, error_out=False)
     detail = pagination.items
     total = pagination.total
-    _data = [{'caseId': c.case_id, 'caseName': c.case_name, 'caseExecStatus': c.case_exec_status, 'caseDuration': c.case_duration, 'caseDataId':c.case_data_id, \
+    _data = [{'caseId': c.case_id, 'caseName': c.case_name, 'caseExecStatus': c.case_exec_status, 'caseTimeStartAt': c.case_time_start_at, 'caseDuration': c.case_duration, 'caseDataId':c.case_data_id, \
               'caseDataName': c.case_data_name, 'apiMsgId': c.api_msg_id, 'apiMsgName':c.api_msg_name, 'apiExecStatus':c.api_exec_status, 'responseTime':c.response_time, \
-              'projectId':c.project_id,'projectName':project_name, 'reportId':c.report_id, 'resultSummaryId':c.result_summary_id}
+              'projectId':c.project_id,'projectName':project_name, 'caseSetId':c.case_set_id, 'caseSetName':c.case_set_name,  'reportId':c.report_id, 'resultSummaryId':c.result_summary_id}
              for c in detail]
     return jsonify({'data': _data, 'total': total, 'status': 1})
