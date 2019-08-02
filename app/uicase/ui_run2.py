@@ -117,6 +117,7 @@ class DpAppTests(threading.Thread):
             return False, '无效行', None
         print('执行 desc = {0},index={1},action={2}'.format(step['desc'], self.case['id'],
                                                           step['action']))
+        global actionOp
         if step['resourceid']:
             return actionOp.click_by_id(step['resourceid'], reportName=reportName,
                                         stepName=step['name'])
@@ -128,7 +129,7 @@ class DpAppTests(threading.Thread):
                                           stepName=step['name'])
 
 
-        global actionOp
+
         if step['action']:
             if step['action'] == 'click':
                 print('waiting 1 sec')
