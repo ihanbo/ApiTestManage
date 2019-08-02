@@ -4,7 +4,8 @@ import importlib
 import json
 import re
 import types
-
+import datetime
+from .response_decrypt import *
 
 def auto_num(num, model, **kwargs):
     """自动返回编号的最大值"""
@@ -234,6 +235,40 @@ def encode_object(obj):
 
     # raise TypeError("{} is not JSON serializable".format(obj))
 
+def convert_gmt2utc(jump_res):
+    jump_res_dict = json.loads(jump_res)
+    GMT_FORMAT  = '%a, %d %b %Y %H:%M:%S GMT'
+    for index, case in enumerate(jump_res_dict['details']):
+        if case['records']:
+            for casedata in case['records']:
+                if casedata['status'] != 'error' and int(
+                        casedata['meta_datas']['data'][0]['response']['json']['status']) == 1:
+                    for data in casedata['meta_datas']['data']:
+                        if 'Date' in data['response']['headers'].keys():
+                            datetime_data = datetime.datetime.strptime(data['response']['headers']['Date'], GMT_FORMAT) + datetime.timedelta(hours=8)
+                            data['response']['headers']['Date'] = datetime_data.strftime(GMT_FORMAT)
+                        else:
+                            pass
+
+                        if  'Last-Modified' in data['response']['headers'].keys():
+                            datetime_last_modified = datetime.datetime.strptime(
+                                data['response']['headers']['Last-Modified'], GMT_FORMAT) + datetime.timedelta(hours=8)
+                            data['response']['headers']['Last-Modified'] = datetime_last_modified.strftime(GMT_FORMAT)
+                        else:
+                            pass
+
+                        if 'get_car_price_list' in data['request']['url']:
+                            target = data['response']['json']['data']['priceList']
+                            data['response']['json']['data']['priceList'] = app_decrypt(target,
+                                                                                        'caf86ffe6814454096572dcdffacd2b4')
+                        else:
+                            pass
+                else:
+                    pass
+        else:
+            pass
+
+    return json.dumps(jump_res_dict)
 
 if __name__ == '__main__':
     # func_list = importlib.reload(importlib.import_module(r"func_list.abuild_in_fun.py"))

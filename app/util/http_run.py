@@ -6,6 +6,7 @@ from httprunner.api import HttpRunner
 from ..util.global_variable import *
 from ..util.httprunner_change import *
 from ..util.utils import encode_object
+from ..util.utils import convert_gmt2utc
 import importlib
 from app import scheduler
 from flask.json import JSONEncoder
@@ -234,6 +235,8 @@ class RunCase(object):
             project_id=self.project_ids, read_status='待阅')
         db.session.add(new_report)
         db.session.commit()
+
+        jump_res = convert_gmt2utc(jump_res)
 
         self.new_report_id = new_report.id
         with open('{}{}.txt'.format(REPORT_ADDRESS, self.new_report_id), 'w',encoding='utf-8') as f:
