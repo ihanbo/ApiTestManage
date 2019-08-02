@@ -115,6 +115,7 @@ class Project(db.Model):
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
     is_execute = db.Column(db.Integer(), nullable=True, default=0, comment='是否执行过：1已执行、0未执行')
+    report_id = db.Column(db.Integer(), nullable=True, comment='生成的报告id')
 
 
 class Module(db.Model):

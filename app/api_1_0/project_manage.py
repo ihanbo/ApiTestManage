@@ -81,6 +81,7 @@ def find_project():
                 'name': c.name,
                 'choice': c.environment_choice,
                 'is_execute': c.is_execute,
+                'report_id': c.report_id,
                 'principal': User.query.filter_by(id=c.user_id).first().name,
                 'host_two': c.host_two, 'host_three': c.host_three, 'host_four': c.host_four} for c in _data]
     return jsonify({'data': project, 'total': total, 'status': 1, 'userData': user_data})
@@ -147,7 +148,7 @@ def find_project_report():
     data = request.json
     projectName = data.get('projectName')
     id = data.get('id')
-    report_id = ResultSummary.query.filter_by(project_id=id).first().report_id
+    report_id = ResultSummary.query.filter_by(project_id=id).order_by(ResultSummary.id.desc()).first().report_id
 
     return jsonify({'data': report_id})
 
@@ -169,16 +170,18 @@ def run_project():
     d = RunCase(project_id)
     d.get_case_test(case_id_list)
     jump_res = d.run_case()
+    report_id = -1
     if data.get('reportStatus'):
         # d.build_report(jump_res, case_ids)
         report_id = d.build_report(jump_res, case_id_list)
         d.gen_result_summary(jump_res, project_id, report_id)
     res = json.loads(jump_res)
 
-    # 项目是否测试运行，加入状态判断
-    if res and project_id:
+    # 项目是否测试运行，加入状态判断,并写入report_id
+    if res and project_id and report_id != -1:
         old_data = Project.query.filter_by(id=project_id).first()
         old_data.is_execute = 1
+        old_data.report_id = report_id
         db.session.commit()
 
     return jsonify({'msg': '执行完成，请查看执行结果', 'status': 0, 'data': {'report_id': d.new_report_id, 'data': res}})
