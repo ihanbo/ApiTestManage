@@ -196,12 +196,13 @@ def del_project():
     pro_data = Project.query.filter_by(id=ids).first()
     if current_user.id != pro_data.user_id:
         return jsonify({'msg': '不能删除别人创建的项目', 'status': 0})
-    if pro_data.modules.all():
-        return jsonify({'msg': '请先删除项目下的接口模块', 'status': 0})
-    if pro_data.case_sets.all():
-        return jsonify({'msg': '请先删除项目下的业务集', 'status': 0})
-    if pro_data.configs.all():
-        return jsonify({'msg': '请先删除项目下的业务配置', 'status': 0})
+    # if pro_data.modules.all():
+    #     return jsonify({'msg': '请先删除项目下的接口模块', 'status': 0})
+    # if pro_data.case_sets.all():
+    #     return jsonify({'msg': '请先删除项目下的业务集', 'status': 0})
+    # if pro_data.configs.all():
+    #     return jsonify({'msg': '请先删除项目下的业务配置', 'status': 0})
+
     db.session.delete(pro_data)
     return jsonify({'msg': '删除成功', 'status': 1})
 
