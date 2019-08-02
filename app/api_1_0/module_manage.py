@@ -82,7 +82,7 @@ def add_model():
         return jsonify({'msg': '项目名称为空，请检查后重新创建模块', 'status': 0})
     name = data.get('name')
     if not name:
-        return jsonify({'msg': '模块名称不能为空', 'status': 0})
+        return jsonify({'msg': '接口分类名称不能为空', 'status': 0})
 
     ids = data.get('id')
     project_id = Project.query.filter_by(name=project_name).first().id
@@ -92,7 +92,7 @@ def add_model():
         old_num = old_data.num
         list_data = Project.query.filter_by(name=project_name).first().modules.all()
         if Module.query.filter_by(name=name, project_id=project_id).first() and name != old_data.name:
-            return jsonify({'msg': '模块名字重复', 'status': 0})
+            return jsonify({'msg': '接口分类名称重复', 'status': 0})
 
         num_sort(num, old_num, list_data, old_data)
         old_data.name = name
@@ -101,7 +101,7 @@ def add_model():
         return jsonify({'msg': '修改成功', 'status': 1})
     else:
         if Module.query.filter_by(name=name, project_id=project_id).first():
-            return jsonify({'msg': '模块名字重复', 'status': 0})
+            return jsonify({'msg': '接口分类名称重复', 'status': 0})
         else:
             new_model = Module(name=name, project_id=project_id, num=num)
             db.session.add(new_model)
@@ -129,7 +129,7 @@ def del_model():
     ids = data.get('id')
     _edit = Module.query.filter_by(id=ids).first()
     if current_user.id != Project.query.filter_by(id=_edit.project_id).first().user_id:
-        return jsonify({'msg': '不能删除别人项目下的模块', 'status': 0})
+        return jsonify({'msg': '不能删除别人项目下的接口分类', 'status': 0})
     # 删除模块，即删除模块的相关全部信息
     # if _edit.api_msg.all():
     #     return jsonify({'msg': '请先删除模块下的接口用例', 'status': 0})
