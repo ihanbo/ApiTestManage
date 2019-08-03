@@ -120,9 +120,12 @@ def run_set():
         #d.build_report(jump_res, case_ids)
         report_id = d.build_report(jump_res, case_set_ids)
         d.gen_result_summary(jump_res, project_id, report_id)
-        case_set_data = CaseSet.query.filter_by(id = set_id).first()
-        case_set_data.is_execute = 1
-        case_set_data.report_id = report_id
+
+        CaseSet.query.filter_by(id = set_id).first().is_execute = 1
+        CaseSet.query.filter_by(id=set_id).first().report_id = report_id
+        # case_set_data = CaseSet.query.filter_by(id = set_id).first().is_execute
+        # case_set_data.is_execute = 1
+        # case_set_data.report_id = report_id
 
     res = json.loads(jump_res)
     return jsonify({'msg': '运行完成，请查看测试报告结果', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
