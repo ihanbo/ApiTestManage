@@ -128,7 +128,9 @@ def run_set():
         # case_set_data.report_id = report_id
 
     res = json.loads(jump_res)
-    return jsonify({'msg': '运行完成，请查看测试报告结果', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
+    return jsonify({'msg': '运行完成，请查看测试报告结果', 'status': 1, 'data': ''})
+
+    # return jsonify({'msg': '运行完成，请查看测试报告结果', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
 
 
 @api.route('/caseSet/del', methods=['POST'])
