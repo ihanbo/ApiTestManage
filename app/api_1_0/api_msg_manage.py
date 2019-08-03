@@ -158,6 +158,19 @@ def run_api_msg():
     return jsonify({'msg': '测试完成', 'data': res, 'status': 1})
 
 
+
+@api.route('/apiMsg/findApiResult', methods=['POST'])
+@login_required
+def find_api_result():
+    """查询运行结果信息"""
+    data = request.json
+    api_id = data.get('id')
+    if not api_id:
+        return jsonify({'msg': '接口id不存在，请检查后重新查看', 'status': 1})
+    result_data = ApiMsg.query.filter_by(id=api_id).first().save_result
+    return jsonify({'msg': str(result_data), 'status': 0})
+
+
 @api.route('/apiMsg/find', methods=['POST'])
 @login_required
 def find_api_msg():
@@ -197,7 +210,7 @@ def find_api_msg():
              'validate': json.loads(c.validate),
              'param': json.loads(c.param),
              'charge_name': c.charge_name,
-             'save_result': c.save_result,
+             # 'save_result': c.save_result,
              'is_execute': c.is_execute,
              'statusCase': {'extract': [True, True], 'variable': [True, True],
                             'validate': [True, True], 'param': [True, True]},
