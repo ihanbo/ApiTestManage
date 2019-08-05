@@ -3,7 +3,7 @@ from flask_login import current_user
 
 from app.api_1_0 import api, login_required
 from app.models import *
-from app.uicase import ui_run, ui_run2, android_engine
+from app.uicase import ui_run, ui_run2, android_engine, ui_case_run
 from app.uicase.ui_run import DpAppTests
 from app.util.case_change.core import Excelparser
 from ..util.utils import *
@@ -202,10 +202,14 @@ def run_ui_cases():
     if _steps_data is None:
         return jsonify({'msg': '未找到用例', 'status': 0})
 
-    succ, desc = android_engine.setUp()
+    # return jsonify({'msg': 'ok', 'status': 1})
+    succ, desc =  ui_case_run.setUp(platform=_case.platform)
+
     if succ:
-        android_engine.run_ui_case(_case.__dict__, _steps_data)
+        ui_case_run.run_ui_cases(_case.__dict__, _steps_data)
     return jsonify({'msg': desc, 'status': 1 if succ else 0})
+
+
 
 
 def assemble_step(case_id) -> dict:
