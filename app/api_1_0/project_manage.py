@@ -80,6 +80,8 @@ def find_project():
                 'host': c.host,
                 'name': c.name,
                 'choice': c.environment_choice,
+                'is_execute': c.is_execute,
+                'report_id': c.report_id,
                 'principal': User.query.filter_by(id=c.user_id).first().name,
                 'host_two': c.host_two, 'host_three': c.host_three, 'host_four': c.host_four} for c in _data]
     return jsonify({'data': project, 'total': total, 'status': 1, 'userData': user_data})
@@ -138,6 +140,20 @@ def add_project():
             db.session.commit()
             return jsonify({'msg': '新建成功', 'status': 1})
 
+
+@api.route('/project/findProjectReport', methods=['POST'])
+@login_required
+def find_project_report():
+    #查询运行项目的报告id
+    data = request.json
+    projectName = data.get('projectName')
+    id = data.get('id')
+    report_id = ResultSummary.query.filter_by(project_id=id).order_by(ResultSummary.id.desc()).first().report_id
+
+    return jsonify({'data': report_id})
+
+
+
 @api.route('/project/runProject', methods=['POST'])
 @login_required
 def run_project():
@@ -154,11 +170,19 @@ def run_project():
     d = RunCase(project_id)
     d.get_case_test(case_id_list)
     jump_res = d.run_case()
+    report_id = -1
     if data.get('reportStatus'):
         # d.build_report(jump_res, case_ids)
         report_id = d.build_report(jump_res, case_id_list)
         d.gen_result_summary(jump_res, project_id, report_id)
     res = json.loads(jump_res)
+
+    # 项目是否测试运行，加入状态判断,并写入report_id
+    if res and project_id and report_id != -1:
+        old_data = Project.query.filter_by(id=project_id).first()
+        old_data.is_execute = 1
+        old_data.report_id = report_id
+        db.session.commit()
 
     return jsonify({'msg': '执行完成，请查看执行结果', 'status': 0, 'data': {'report_id': d.new_report_id, 'data': res}})
 
@@ -172,12 +196,13 @@ def del_project():
     pro_data = Project.query.filter_by(id=ids).first()
     if current_user.id != pro_data.user_id:
         return jsonify({'msg': '不能删除别人创建的项目', 'status': 0})
-    if pro_data.modules.all():
-        return jsonify({'msg': '请先删除项目下的接口模块', 'status': 0})
-    if pro_data.case_sets.all():
-        return jsonify({'msg': '请先删除项目下的业务集', 'status': 0})
-    if pro_data.configs.all():
-        return jsonify({'msg': '请先删除项目下的业务配置', 'status': 0})
+    # if pro_data.modules.all():
+    #     return jsonify({'msg': '请先删除项目下的接口模块', 'status': 0})
+    # if pro_data.case_sets.all():
+    #     return jsonify({'msg': '请先删除项目下的业务集', 'status': 0})
+    # if pro_data.configs.all():
+    #     return jsonify({'msg': '请先删除项目下的业务配置', 'status': 0})
+
     db.session.delete(pro_data)
     return jsonify({'msg': '删除成功', 'status': 1})
 
@@ -189,15 +214,28 @@ def edit_project():
     data = request.json
     pro_id = data.get('id')
     _edit = Project.query.filter_by(id=pro_id).first()
-    _data = {'pro_name': _edit.name,
-             'user_id': _edit.user_id,
-             'principal': _edit.principal,
-             'func_file': _edit.func_file,
-             'host': json.loads(_edit.host),
-             'host_two': json.loads(_edit.host_two),
-             'host_three': json.loads(_edit.host_three),
-             'host_four': json.loads(_edit.host_four),
-             'headers': json.loads(_edit.headers),
-             'environment_choice': _edit.environment_choice,
-             'variables': json.loads(_edit.variables)}
+    if _edit.variables:
+        _data = {'pro_name': _edit.name,
+                 'user_id': _edit.user_id,
+                 'principal': _edit.principal,
+                 'func_file': _edit.func_file,
+                 'host': json.loads(_edit.host),
+                 'host_two': json.loads(_edit.host_two),
+                 'host_three': json.loads(_edit.host_three),
+                 'host_four': json.loads(_edit.host_four),
+                 'headers': json.loads(_edit.headers),
+                 'environment_choice': _edit.environment_choice,
+                 'variables': json.loads(_edit.variables)}
+    else:
+        _data = {'pro_name': _edit.name,
+                 'user_id': _edit.user_id,
+                 'principal': _edit.principal,
+                 'func_file': _edit.func_file,
+                 'host': json.loads(_edit.host),
+                 'host_two': json.loads(_edit.host_two),
+                 'host_three': json.loads(_edit.host_three),
+                 'host_four': json.loads(_edit.host_four),
+                 'headers': json.loads(_edit.headers),
+                 'environment_choice': _edit.environment_choice,
+                 'variables': []}
     return jsonify({'data': _data, 'status': 1})

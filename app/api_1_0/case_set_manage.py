@@ -82,7 +82,8 @@ def find_set():
     pagination = all_sets.paginate(page, per_page=per_page, error_out=False)
     _items = pagination.items
     total = pagination.total
-    current_set = [{'label': s.name, 'id': s.id, 'choice': s.environment_choice} for s in _items]
+    current_set = [{'label': s.name, 'id': s.id, 'choice': s.environment_choice,
+                    'is_execute': s.is_execute, 'report_id': s.report_id} for s in _items]
     all_set = [{'label': s.name, 'id': s.id} for s in all_sets.all()]
     return jsonify({'status': 1, 'total': total, 'data': current_set, 'all_set': all_set})
 
@@ -119,8 +120,17 @@ def run_set():
         #d.build_report(jump_res, case_ids)
         report_id = d.build_report(jump_res, case_set_ids)
         d.gen_result_summary(jump_res, project_id, report_id)
+
+        CaseSet.query.filter_by(id=set_id).first().is_execute = 1
+        CaseSet.query.filter_by(id=set_id).first().report_id = report_id
+        # case_set_data = CaseSet.query.filter_by(id = set_id).first()
+        # case_set_data.is_execute = 1
+        # case_set_data.report_id = report_id
+
     res = json.loads(jump_res)
-    return jsonify({'msg': '运行完成，请查看测试报告结果', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
+    return jsonify({'msg': '运行完成，请查看测试报告结果', 'status': 1, 'data': ''})
+
+    # return jsonify({'msg': '运行完成，请查看测试报告结果', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})
 
 
 @api.route('/caseSet/del', methods=['POST'])
@@ -133,8 +143,11 @@ def del_set():
     case = Case.query.filter_by(case_set_id=set_id).first()
     if current_user.id != Project.query.filter_by(id=_edit.project_id).first().user_id:
         return jsonify({'msg': '不能删除别人项目下的模块', 'status': 0})
+
+    """ 
     if case:
         return jsonify({'msg': '请先删除集合下的接口用例', 'status': 0})
+    """
 
     db.session.delete(_edit)
     return jsonify({'msg': '删除成功', 'status': 1})
