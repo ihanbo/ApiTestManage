@@ -16,11 +16,14 @@ class AndroidTestEngine(object):
 
     def __init__(self, package='com.yiche.autoeasy', launch_ac='com.yiche.autoeasy.ADActivity',
                  home_ac='.MainActivity3'):
+
+        device = 'aaaa'
         self.desired_caps = {}
         self.desired_caps['platformName'] = 'Android'
+        self.desired_caps['udid'] = device
         self.desired_caps['platformVersion'] = os.popen(
-            'adb shell getprop ro.build.version.release').read()
-        self.desired_caps['deviceName'] = os.popen('adb shell getprop ro.product.model').read()
+            f'adb -s {device} shell getprop ro.build.version.release').read()
+        self.desired_caps['deviceName'] = os.popen(f'adb -s {device} shell getprop ro.product.model').read()
         self.desired_caps['noReset'] = 'true'
         self.desired_caps['autoLaunch'] = 'true'
         self.desired_caps['appPackage'] = package
