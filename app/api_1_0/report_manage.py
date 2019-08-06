@@ -162,7 +162,7 @@ def find_ui_list():
     """ 获取UI报告列表"""
     data = request.json
     project_name = data.get('projectName')
-    project_id = Project.query.filter_by(name=project_name).first().id
+    project_id = UI_Project.query.filter_by(name=project_name).first().id
     page = data.get('page') if data.get('page') else 1
     per_page = data.get('sizePage') if data.get('sizePage') else 10
 

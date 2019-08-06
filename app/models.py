@@ -125,7 +125,6 @@ class Module(db.Model):
     num = db.Column(db.Integer(), nullable=True, comment='模块序号')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
     api_msg = db.relationship('ApiMsg', order_by='ApiMsg.num.asc()', lazy='dynamic')
-    ui_cases = db.relationship('UICase', order_by='UICase.num.asc()', lazy='dynamic')
     environment_choice = db.Column(db.String(16), default='first', comment='环境选择，first为测试，以此类推')
     is_execute = db.Column(db.Integer(), nullable=True, default=0, comment='是否执行过：1已执行、0未执行')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
@@ -202,6 +201,7 @@ class ApiMsg(db.Model):
     is_execute = db.Column(db.Integer(), nullable=True, default=0, comment='是否执行过：1已执行、0未执行')
     save_result = db.Column(db.String(), nullable=True, comment='保存结果信息')
 
+
 class CaseData(db.Model):
     __tablename__ = 'case_data'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
@@ -234,6 +234,7 @@ class Report(db.Model):
     project_id = db.Column(db.String(16), nullable=True)
     create_time = db.Column(db.DateTime(), index=True, default=datetime.now)
 
+
 class ResultSummary(db.Model):
     __tablename__ = 'result_summary'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
@@ -247,9 +248,10 @@ class ResultSummary(db.Model):
     step_failures = db.Column(db.Integer(), nullable=True, comment='失败步骤数')
     step_errors = db.Column(db.Integer(), nullable=True, comment='错误步骤数')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
-    report_id =  db.Column(db.Integer, db.ForeignKey('report.id'), comment='报告id')
+    report_id = db.Column(db.Integer, db.ForeignKey('report.id'), comment='报告id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
 
 class ResultDetail(db.Model):
     __tablename__ = 'result_detail'
@@ -259,7 +261,7 @@ class ResultDetail(db.Model):
     case_exec_status = db.Column(db.Boolean, nullable=True, default=True, comment='用例执行状态')
     case_time_start_at = db.Column(db.DateTime, index=True, default=datetime.now, comment='用例开始时间')
     case_duration = db.Column(db.Float(), nullable=True, comment="用例持续时间")
-    case_data_id = db.Column(db.Integer(),  db.ForeignKey('case_data.id'), comment='用例步骤id')
+    case_data_id = db.Column(db.Integer(), db.ForeignKey('case_data.id'), comment='用例步骤id')
     case_data_name = db.Column(db.String(128), nullable=True, comment='用例步骤名称')
     api_msg_id = db.Column(db.Integer, db.ForeignKey('api_msg.id'))
     api_msg_name = db.Column(db.String(128), nullable=True, comment='接口名称')
@@ -340,6 +342,33 @@ class UIAction(db.Model):
             a3 = UIAction(action=u'input', action_name=u'输入')
             db.session.add(a3)
             db.session.commit()
+        action4 = UIAction.query.filter_by(action=u'back').first()
+        if action4 is None:
+            a4 = UIAction(action=u'back', action_name=u'后退')
+            db.session.add(a4)
+            db.session.commit()
+        action5 = UIAction.query.filter_by(action=u'swipe_down').first()
+        if action5 is None:
+            a5 = UIAction(action=u'swipe_down', action_name=u'下滑')
+            db.session.add(a5)
+            db.session.commit()
+
+        action6 = UIAction.query.filter_by(action=u'swipe_up').first()
+        if action6 is None:
+            a6 = UIAction(action=u'swipe_up', action_name=u'上滑')
+            db.session.add(a6)
+            db.session.commit()
+
+        action7 = UIAction.query.filter_by(action=u'swipe_right').first()
+        if action7 is None:
+            a7 = UIAction(action=u'swipe_right', action_name=u'右滑')
+            db.session.add(a7)
+            db.session.commit()
+        action8 = UIAction.query.filter_by(action=u'swipe_left').first()
+        if action8 is None:
+            a8 = UIAction(action=u'swipe_left', action_name=u'左滑')
+            db.session.add(a8)
+            db.session.commit()
         print('default action was created successfully')
         print('--' * 30)
 
@@ -370,11 +399,11 @@ class UICaseStep(db.Model):
     __tablename__ = 'ui_case_step'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
     num = db.Column(db.Integer(), nullable=True, comment='case序号')
-    name = db.Column(db.String(128), nullable=True, comment='名称')
+    name = db.Column(db.String(256), nullable=True, comment='名称')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
-    xpath = db.Column(db.String(1024), comment='定位元素路径')
-    resourceid = db.Column(db.String(256), comment='定位元素id')
-    text = db.Column(db.String(256), comment='定位元素文本')
+    xpath = db.Column(db.String(), comment='定位元素路径')
+    resourceid = db.Column(db.String(), comment='定位元素id')
+    text = db.Column(db.String(1024), comment='定位元素文本')
     action = db.Column(db.Integer, db.ForeignKey('ui_action.id'), comment='case行为')
     ui_action = db.relationship('UIAction', back_populates='ui_steps')
     extraParam = db.Column(db.String(256), comment='描述')
@@ -385,17 +414,56 @@ class UICaseStep(db.Model):
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
 
+class UI_Project(db.Model):
+    __tablename__ = 'ui_project'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    user_id = db.Column(db.Integer(), nullable=True, comment='所属的用户id')
+    principal = db.Column(db.String(16), nullable=True, comment='所属的用户名称')
+    name = db.Column(db.String(64), nullable=True, unique=True, comment='项目名称')
+    variables = db.Column(db.String(2048), comment='项目的公共变量')
+    func_file = db.Column(db.String(64), comment='函数文件')
+    android_package = db.Column(db.String(128), comment='安卓包名')
+    android_launch = db.Column(db.String(256), comment='安卓启动activity')
+    ios_bundle_id = db.Column(db.String(128), comment='iOS项目bundleid')
+    modules = db.relationship('UI_Module', order_by='UI_Module.num.asc()', lazy='dynamic')
+    case_sets = db.relationship('UI_CaseSet', order_by='UI_CaseSet.num.asc()', lazy='dynamic')
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
+
+class UI_Module(db.Model):
+    __tablename__ = 'ui_module'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    name = db.Column(db.String(64), nullable=True, comment='接口模块')
+    num = db.Column(db.Integer(), nullable=True, comment='模块序号')
+    project_id = db.Column(db.Integer, db.ForeignKey('ui_project.id'), comment='所属的项目id')
+    ui_cases = db.relationship('UICase', order_by='UICase.num.asc()', lazy='dynamic')
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
 
 class UICase(db.Model):
     __tablename__ = 'ui_case'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
-    module_id = db.Column(db.Integer, db.ForeignKey('module.id'), comment='所属的接口模块id')
+    module_id = db.Column(db.Integer, db.ForeignKey('ui_module.id'), comment='所属的接口模块id')
     platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
+    caseset_id = db.Column(db.Integer, db.ForeignKey('ui_case_set.id'), comment='对应用例集')
     name = db.Column(db.String(256), nullable=True, comment='名称')
     num = db.Column(db.Integer(), nullable=True, comment='case序号')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
+
+
+class UI_CaseSet(db.Model):
+    __tablename__ = 'ui_case_set'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    num = db.Column(db.Integer(), nullable=True, comment='用例集合序号')
+    name = db.Column(db.String(256), nullable=True, comment='用例集名称')
+    project_id = db.Column(db.Integer, db.ForeignKey('ui_project.id'), comment='所属的项目id')
+    cases = db.relationship('UICase', order_by='UICase.num.asc()', lazy='dynamic')
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
 
 class UICaseReport(db.Model):
     __tablename__ = 'ui_case_report'
