@@ -21,7 +21,8 @@ platform = 1  # 平台1：安卓 2：ios
 driver = None
 
 
-def setUp(**kwargs) -> (bool, str):
+def setUp(and_package='com.yiche.autoeasy', and_launch='', ios_bundleid='bitauto.application',
+          **kwargs) -> (bool, str):
     global isRunning
     if isRunning:
         return False, '用例测试进行中'
@@ -88,7 +89,7 @@ class engine(threading.Thread):
         print('3秒后开始测试流程')
         sleep(3)
         # self.case.get('name','not_found') + strftime("%Y-%m-%d_%H-%M-%S")
-        report_name = self.case.get('name','not_found')+ strftime("%Y-%m-%d_%H-%M-%S")
+        report_name = self.case.get('name', 'not_found') + strftime("%Y-%m-%d_%H-%M-%S")
         result = {}
         result['reportName'] = report_name
         result['case_name'] = self.case['name']
@@ -134,7 +135,7 @@ class engine(threading.Thread):
             desc=self.case['desc'],
             read_status='未读',
             result=result_str,
-            report_dir= report_name,
+            report_dir=report_name,
             platform=self.case['platform'],
             project_id=self.case['project_id'],
             module_id=self.case['module_id'])
