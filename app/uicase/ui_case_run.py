@@ -12,56 +12,87 @@ from app.models import UICaseReport
 from app.uicase.android_engine import AndroidTestEngine
 from app.uicase.ui_action2 import BaseOperate
 
-isRunning = False
-dr = None
-actionOp = None
-
-isRunning: bool = False  # 标记服务运行中
-platform = 1  # 平台1：安卓 2：ios
-driver = None
+running_devices: dict = {}
 
 
-def setUp(and_package='com.yiche.autoeasy', and_launch='', ios_bundleid='bitauto.application',
-          **kwargs) -> (bool, str):
-    global isRunning
-    if isRunning:
-        return False, '用例测试进行中'
+# isRunning = False
+# dr = None
+# actionOp = None
+#
+# isRunning: bool = False  # 标记服务运行中
+# platform = 1  # 平台1：安卓 2：ios
+# driver = None
 
-    isRunning = True
-    global platform, driver
-    platform = kwargs['platform']
-    succ, driver, desc = connect_appium()
-    isRunning = succ
+
+def setUp(**kwargs) -> (bool, str):
+    """
+    platform：平台1：安卓 2：iOS
+    is_android：bool标记是否是安卓
+    udid：测试设备
+    single_test:单条测试single_test['case'] 、single_test['steps']
+    caseset_test:用例集测试
+    report_dir：目录存放地址
+    test_desc：本次测试描述
+
+    driver：测试驱动
+    """
+    if kwargs['single_test']:
+        _test_name = kwargs['single_test']['case']['desc']
+        _report_dir = kwargs['single_test']['case']['name'] + strftime("%Y-%m-%d_%H-%M-%S")
+    elif kwargs['caseset_test']:
+        _test_name = '用例集测试'
+        _report_dir = 'caseset_test-' + strftime("%Y-%m-%d_%H-%M-%S")
+    else:
+        return False, '未发现测试用例'
+
+    kwargs['report_dir'] = _report_dir
+    kwargs['test_desc'] = _test_name
+
+    udid = kwargs['udid']
+    global running_devices
+    if udid in list(running_devices.keys):
+        return False, f'该设备正在测试中：{running_devices[udid]}'
+
+    running_devices[udid] = _test_name
+    succ, driver, desc = connect_appium(kwargs)
+    if not succ:
+        del running_devices[udid]
     return succ, desc
 
 
-def connect_appium():
-    global platform
+def connect_appium(**kwargs):
+    platform = kwargs['platform']
     if platform == 1:
+        kwargs['is_android'] = True
+        # and_package='com.yiche.autoeasy', and_launch='',
         return False, None, '稍等片刻还没弄了'
     elif platform == 2:
-        return ios_connect()
+        kwargs['is_android'] = False
+        return ios_connect(kwargs)
     else:
-        return False, None, '未知平台'
+        return False, '未能识别的平台'
 
 
-def ios_connect():
+def ios_connect(**kwargs):
     try:
+        ios_bundleid = kwargs['ios_bundleid']
+        udid = kwargs['udid']
         driver = webdriver.Remote(
             command_executor='http://0.0.0.0:4723/wd/hub',
             desired_capabilities={
                 'platformName': 'iOS',
                 'platformVersion': '12.2',
                 'deviceName': 'iPhone',
-                'bundleId': 'bitauto.application',
-                # 'udid': '00008020-001E11502E04002E', #xs
-                'udid': '3a9b705aa4c3e42bef8dece2e8e35b581651ef35',  # 6sp
+                'bundleId': ios_bundleid,
+                'udid': udid,
                 "xcodeOrgId": "3WB4F23CG9",
                 "xcodeSigningId": "iPhone Developer",
                 "unicodeKeyboard": True,
                 "resetKeyboard": True
             }
         )
+        kwargs['driver'] = driver
+        engine(kwargs).start()
         return True, driver, "启动服务成功"
     except Exception as e:
         print(e)
@@ -75,76 +106,109 @@ def run_ui_cases(case: dict, steps: list):
 
 class engine(threading.Thread):
 
-    def __init__(self, platform: int, case: dict, steps: list):
+    def __init__(self, **kwargs):
         threading.Thread.__init__(self)
         self.threadID = 1111
         self.name = "ui-test-thread"
-        self.platform = platform
-        self.case = case
-        self.steps = steps
-        global driver
-        self.op = BaseOperate(platform, driver)
+
+        self.udid = kwargs['udid']
+        self.platform = kwargs['platform']
+        self.is_android = kwargs['is_android']
+        self.driver: webdriver = kwargs['driver']
+        self.report_dir = kwargs['report_dir']
+        self.test_desc = kwargs['test_desc']
+        if kwargs['single_test']:
+            self.is_single_test = True
+            self.test = kwargs['single_test']
+        elif kwargs['caseset_test']:
+            self.is_single_test = False
+            self.test = kwargs['caseset_test']
+        else:
+            # 找不到用例，停止驱动，删除设备
+            global running_devices
+            del running_devices[kwargs['udid']]
+            self.driver.quit()
+        self.op = BaseOperate(self.platform, self.driver)
 
     def run(self):  # 需要执行的case
         print('3秒后开始测试流程')
         sleep(3)
-        # self.case.get('name','not_found') + strftime("%Y-%m-%d_%H-%M-%S")
-        report_name = self.case.get('name', 'not_found') + strftime("%Y-%m-%d_%H-%M-%S")
         result = {}
-        result['reportName'] = report_name
-        result['case_name'] = self.case['name']
-        result['case_desc'] = self.case['desc']
+        result['report_dir'] = self.report_dir
+        result['test_desc'] = self.test_desc
         result['succ'] = True
-        result['step'] = []
+        result['cases'] = []
 
+        if self.is_single_test:
+            succ,report = self.test_one_case[self.test]
+            result['succ'] = succ
+            result['cases'].append(report)
+        else:
+            for test in self.test:
+                succ,report = self.test_one_case[test]
+                result['succ'] = succ
+                result['cases'].append(report)
+                if not succ:
+                    break
+
+        sleep(5)
+        global running_devices
+        del running_devices[self.udid]
+        self.driver.quit()
+        result_str = json.dumps(result)
+        print(result_str)
+        # case_report = UICaseReport(
+        #     name=self.case['name'],
+        #     desc=self.case['desc'],
+        #     read_status='未读',
+        #     result=result_str,
+        #     report_dir=report_name,
+        #     platform=self.case['platform'],
+        #     project_id=self.case['project_id'],
+        #     module_id=self.case['module_id'])
+        # db.session.add(case_report)
+        # db.session.commit()
+
+    def test_one_case(self, test: dict):
+        case = test['case']
+        steps = test['steps']
+        report = {'case_name': case['name'], 'case_desc': case['desc'], 'case_succ': True}
+
+        report['case_step'] = []
         try:
-            for step in self.steps:
-                succ, desc, pic = self.excuteLine(step, report_name)
-                result['step'].append({
+            for step in steps:
+                succ, desc = self.excuteLine(step, self.report_dir)
+                report['case_step'].append({
                     'succ': succ,
                     'desc': desc,
-                    'pic': pic,
+                    'pic': None if not succ else self.getscreen(step['name']),
                     'stepName': step['name'],
                     'stepDesc': step['desc']
                 })
                 if not succ:
-                    result['succ'] = False
+                    report['case_succ'] = False
                     break
                 else:
-                    print(f'执行完成步骤： {step["desc"]}，没有休眠2秒')
-                    # sleep(2)
+                    print(f'执行完成步骤： {step["desc"]}，休眠2秒')
+                    sleep(2)
         except Exception as e:
-            result['succ'] = False
-            result['step'].append({
+            report['case_succ'] = False
+            report['case_step'].append({
                 'succ': False,
                 'desc': str(e),
-                'pic': None,
+                'pic': self.getscreen(step['name']),
                 'stepName': step['name'],
                 'stepDesc': step['desc']
             })
-            print(e)
+            print(f'用例{case["desc"]}的步骤{step["desc"]}出现异常：{e}')
 
-        sleep(5)
-        global isRunning, driver
-        isRunning = False
-        driver.quit()
-        result_str = json.dumps(result)
-        print(result_str)
-        case_report = UICaseReport(
-            name=self.case['name'],
-            desc=self.case['desc'],
-            read_status='未读',
-            result=result_str,
-            report_dir=report_name,
-            platform=self.case['platform'],
-            project_id=self.case['project_id'],
-            module_id=self.case['module_id'])
-        # db.session.add(case_report)
-        # db.session.commit()
+        print(f'用例{case["desc"]}测试结束:结果{"成功"if report["case_succ"] else "失败"}')
+        return report["case_succ"],report
 
-    def excuteLine(self, step: dict, report_name: str):
+
+    def excuteLine(self, step: dict):
         if step is None:
-            return False, '无效行', None
+            return False, '无效行'
         print(f'执行 步骤： {step["desc"]} ,action={step["action"]}')
 
         ele: WebElement = None
@@ -154,17 +218,44 @@ class engine(threading.Thread):
             ele = self.op.find_xpath(step['xpath'])
         elif step['text']:
             ele = self.op.find_text(step['text'])
-        if not ele:
-            return False, '未找到元素', None
 
+        _action_succ = True
         if step['action'] == 'click':
             ele.click()
-            return True, '执行成功', None
         elif step['action'] == 'input':
             ele.send_keys(step['extraParam'])
-            return True, '执行成功', None
+        elif step['action'] == 'back':
+            pass
+        elif step['action'] == 'swipe_down':
+            pass
+        elif step['action'] == 'swipe_up':
+            pass
+        elif step['action'] == 'swipe_left':
+            pass
+        elif step['action'] == 'swipe_right':
+            pass
         else:
-            return False, '无效行', None
+            _action_succ = False
+        return _action_succ, f'成功执行：{step["desc"]}' if _action_succ else f'执行失败：{step["desc"]}，未知动作或其他'
+
+    def getscreen(self, pic_name) -> str:
+        u"屏幕截图,保存截图到report\screenshot目录下"
+        try:
+            path = os.path.abspath(os.path.join(os.getcwd(), ".."))  # 获取父级路径的上一级目录路径
+
+            path = path + f"/reports/{self.report_dir}/"
+
+            if not os.path.exists(path):
+                os.makedirs(path)
+                # shutil.rmtree(path) #移除目录
+
+            filename = path + f'{pic_name+strftime("%Y-%m-%d_%H-%M-%S")}.png'  # 修改截图文件的存放路径为相对路径
+            print('截图路径' + filename)
+            self.driver.get_screenshot_as_file(filename)
+            return filename
+        except Exception as e:
+            print("截图异常：" + e)
+            return None
 
 # def run_ui_case(cases: list):
 #     engine.wait_home()
