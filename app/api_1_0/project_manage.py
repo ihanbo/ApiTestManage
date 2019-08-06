@@ -184,7 +184,8 @@ def run_project():
         old_data.report_id = report_id
         db.session.commit()
 
-    return jsonify({'msg': '执行完成，请查看执行结果', 'status': 0, 'data': {'report_id': d.new_report_id, 'data': res}})
+    # return jsonify({'msg': '执行完成，请查看执行结果', 'status': 0, 'data': {'report_id': d.new_report_id, 'data': res}})
+    return jsonify({'msg': '执行完成，请查看执行结果', 'status': 0, 'data':'' })
 
 
 @api.route('/project/del', methods=['POST'])

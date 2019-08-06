@@ -43,7 +43,7 @@ def add_case():
     variable_check = check_case(variable, func_address)
     # if variable_check:
     #     return jsonify({'msg': variable_check, 'status': 0})
-    case_set_id = CaseSet.query.filter_by(name=case_set_name).first().id
+    case_set_id = CaseSet.query.filter_by(name=case_set_name,project_id=project_id).first().id
 
     num = auto_num(data.get('num'), Case, project_id=project_id, case_set_id=case_set_id)
     if ids:
