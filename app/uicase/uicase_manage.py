@@ -204,14 +204,14 @@ def run_ui_cases():
         return jsonify({'msg': '未找到用例', 'status': 0})
 
     # return jsonify({'msg': 'ok', 'status': 1})
-    succ, desc = ui_case_run.setUp(platform=_case.platform,
-                                   udid=data.get('udid'),
-                                   android_launch=_project.android_launch,
-                                   android_package=_project.android_package,
-                                   ios_bundle_id=_project.ios_bundle_id)
-
-    if succ:
-        ui_case_run.run_ui_cases(_case.__dict__, _steps_data)
+    succ, desc = ui_case_run.try_start_test(platform=_case.platform,
+                                            # udid=data.get('udid'),
+                                            udid='d96c4503',
+                                            android_launch=_project.android_launch,
+                                            android_package=_project.android_package,
+                                            single_test={'case': _case.__dict__,
+                                                         'steps': _steps_data},
+                                            ios_bundle_id=_project.ios_bundle_id)
     return jsonify({'msg': desc, 'status': 1 if succ else 0})
 
 

@@ -42,12 +42,12 @@ def try_start_test(**kwargs) -> (bool, str):
 
     udid = kwargs['udid']
     global running_devices
-    if udid in list(running_devices.keys):
+    if udid in list(running_devices.keys()):
         return False, f'该设备正在测试中：{running_devices[udid]}'
 
     running_devices[udid] = _test_name
     try:
-        succ, desc = start_appium_test(kwargs)
+        succ, desc = start_appium_test(**kwargs)
         if not succ:
             del running_devices[udid]
         return succ, desc
@@ -60,12 +60,13 @@ def start_appium_test(**kwargs):
     platform = kwargs['platform']
     if platform == 1:
         kwargs['is_android'] = True
-        return android_connect(kwargs)
+        android_connect(**kwargs)
     elif platform == 2:
         kwargs['is_android'] = False
-        return ios_connect(kwargs)
+        ios_connect(**kwargs)
     else:
         return False, '未能识别的平台'
+    return True, '启动服务成功'
 
 
 def android_connect(**kwargs):
@@ -85,6 +86,7 @@ def android_connect(**kwargs):
     desired_caps['appPackage'] = package
     desired_caps['appActivity'] = launch_ac
     kwargs['driver'] = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)
+    async_case_runner(**kwargs).start()
 
 
 #
@@ -117,7 +119,7 @@ def ios_connect(**kwargs):
         }
     )
     kwargs['driver'] = driver
-    async_case_runner(kwargs).start()
+    async_case_runner(**kwargs).start()
 
 
 class async_case_runner(threading.Thread):
@@ -135,10 +137,10 @@ class async_case_runner(threading.Thread):
         self.test_desc = kwargs['test_desc']
         if kwargs['single_test']:
             self.is_single_test = True
-            self.test = kwargs['single_test']
+            self.test_case = kwargs['single_test']
         elif kwargs['caseset_test']:
             self.is_single_test = False
-            self.test = kwargs['caseset_test']
+            self.test_case = kwargs['caseset_test']
         else:
             # 找不到用例，停止驱动，删除设备
             global running_devices
@@ -156,11 +158,11 @@ class async_case_runner(threading.Thread):
         result['cases'] = []
 
         if self.is_single_test:
-            succ, report = self.test_one_case[self.test]
+            succ, report = self.test_one_case(self.test_case)
             result['succ'] = succ
             result['cases'].append(report)
         else:
-            for test in self.test['cases']:
+            for test in self.test_case['cases']:
                 succ, report = self.test_one_case[test]
                 result['succ'] = succ
                 result['cases'].append(report)
@@ -193,11 +195,11 @@ class async_case_runner(threading.Thread):
         report['case_step'] = []
         try:
             for step in steps:
-                succ, desc = self.excuteLine(step, self.report_dir)
+                succ, desc = self.excuteLine(step)
                 report['case_step'].append({
                     'succ': succ,
                     'desc': desc,
-                    'pic': None if not succ else self.getscreen(step['name']),
+                    'pic': None if succ else self.getscreen(step['name']),
                     'stepName': step['name'],
                     'stepDesc': step['desc']
                 })
@@ -269,7 +271,7 @@ class async_case_runner(threading.Thread):
             self.driver.get_screenshot_as_file(filename)
             return filename
         except Exception as e:
-            print("截图异常：" + e)
+            print("截图异常：" + str(e))
             return None
 
 # def run_ui_case(cases: list):

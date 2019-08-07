@@ -83,6 +83,8 @@ def add_project_ui():
     ios_bundle_id = data.get('ios_bundle_id')
     android_launch = data.get('android_launch')
 
+
+
     if ids:  # 表示修改操作
         old_project_data = UI_Project.query.filter_by(id=ids).first()
         if UI_Project.query.filter_by(
