@@ -406,7 +406,7 @@ class UICaseStep(db.Model):
     xpath = db.Column(db.String(), comment='定位元素路径')
     resourceid = db.Column(db.String(), comment='定位元素id')
     text = db.Column(db.String(1024), comment='定位元素文本')
-    selector = db.Column(db.String(1024), comment='复合定位元素')
+    ui_selector = db.Column(db.String(1024), comment='复合定位元素')
     action = db.Column(db.Integer, db.ForeignKey('ui_action.id'), comment='case行为')
     ui_action = db.relationship('UIAction', back_populates='ui_steps')
     extraParam = db.Column(db.String(1024), comment='描述')

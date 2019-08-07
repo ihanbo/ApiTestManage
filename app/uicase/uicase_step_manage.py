@@ -42,7 +42,7 @@ def add_uicase_step():
     if not action:
         return jsonify({'msg': '元素行为必须填写', 'status': 0})
 
-    project_id = Project.query.filter_by(name=project_name).first().id
+    project_id = UI_Project.query.filter_by(name=project_name).first().id
     num = auto_num(data.get('num'), UICaseStep, module_id=module_id)
 
     if caseStepId:
@@ -95,8 +95,8 @@ def del_uicase_step():
     _data = UICaseStep.query.filter_by(id=case_step_id).first()
 
     project_id = Module.query.filter_by(id=_data.module_id).first().project_id
-    if current_user.id != Project.query.filter_by(id=project_id).first().user_id:
-        return jsonify({'msg': '不能删除别人项目下的接口', 'status': 0})
+    # if current_user.id != UI_Project.query.filter_by(id=project_id).first().user_id:
+    #     return jsonify({'msg': '不能删除别人项目下的接口', 'status': 0})
 
     # 同步删除接口信息下对应用例下的步骤信息
     for d in UicaseStepInfo.query.filter_by(ui_case_step_id=case_step_id).all():

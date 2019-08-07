@@ -36,7 +36,7 @@ def add_uicase():
     if not steps:
         return jsonify({'msg': '步骤不能为空', 'status': 0})
 
-    project_id = Project.query.filter_by(name=project_name).first().id
+    project_id = UI_Project.query.filter_by(name=project_name).first().id
     num = auto_num(data.get('num'), UICase, module_id=module_id)
 
     if caseId:
@@ -142,8 +142,8 @@ def del_uicases():
     _data = UICase.query.filter_by(id=case_id).first()
 
     project_id = Module.query.filter_by(id=_data.module_id).first().project_id
-    if current_user.id != Project.query.filter_by(id=project_id).first().user_id:
-        return jsonify({'msg': '不能删除别人项目下的case', 'status': 0})
+    # if current_user.id != UI_Project.query.filter_by(id=project_id).first().user_id:
+    #     return jsonify({'msg': '不能删除别人项目下的case', 'status': 0})
 
     # 同步删除接口信息下对应用例下的步骤信息
     for d in UicaseStepInfo.query.filter_by(ui_case_id=case_id).all():
@@ -339,7 +339,7 @@ def import_uicases():
     module_id = data.get('moduleId')
     if not module_id and not project_name:
         return jsonify({'msg': '项目和模块不能为空', 'status': 0})
-    project_data = Project.query.filter_by(name=project_name).first()
+    project_data = UI_Project.query.filter_by(name=project_name).first()
 
     import_api_address = data.get('importApiAddress')
 
