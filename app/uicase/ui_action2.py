@@ -28,26 +28,9 @@ class BaseOperate(object):
             self.swipRight(y2=0.8)
 
     def enter_key(self):
-        '''输入enter键'''
+        '''输入按键事件'''
         if self.is_android:
             os.popen("adb shell input keyevent 66")
-
-    def getscreen(self, **kwargs):
-        u"屏幕截图,保存截图到report\screenshot目录下"
-        reportName = kwargs['reportName']
-        stepName = kwargs['stepName']
-        st = strftime("%Y-%m-%d_%H-%M-%S")
-        #         path=os.path.abspath(os.path.join(os.getcwd(), "../.."))
-        path = os.path.abspath(os.path.join(os.getcwd(), ".."))  # 获取父级路径的上一级目录路径
-
-        path = path + "/reports/%s/" % reportName
-        state = os.path.exists(path)  # 判断路径是否存在
-        if state:
-            shutil.rmtree(path)
-        os.makedirs(path)
-        filename = path + "%s.png" % stepName  # 修改截图文件的存放路径为相对路径
-        self.driver.get_screenshot_as_file(filename)
-        print(filename)
 
     def find_xpath(self, xpath: str) -> WebElement:
         ele = self.driver.find_element_by_xpath(xpath)
@@ -98,7 +81,7 @@ class BaseOperate(object):
             u"页面内容获取失败,程序错误或请求超时"
             self.getscreen()
 
-    def find_by_scroll(self, ele_text):
+    def _find_by_scroll(self, ele_text):
         '''滑屏查找指定元素的方法'''
         try:
             self.driver.find_element_by_android_uiautomator(
@@ -117,14 +100,14 @@ class BaseOperate(object):
         return (x, y)
 
     # 屏幕向上滑动
-    def swipeUp(self, y1=0.75, y2=0.25, t=600):
+    def swipe_up(self, y1=0.75, y2=0.25, t=600):
         l = self.getSize()
         x1 = int(l[0] * 0.5)  # x坐标
         y11 = int(l[1] * y1)  # 起始y坐标
         y22 = int(l[1] * y2)  # 终点y坐标
         self.driver.swipe(x1, y11, x1, y22, t)  # t 表示滑屏的时间，5代巴枪默认为600ms，7代巴枪需要根据实测调整参数
 
-    def swipeDown(self, y1=0.25, y2=0.75, t=600):
+    def swipe_down(self, y1=0.25, y2=0.75, t=600):
         '''屏幕向下滑动'''
         l = self.getSize()
         x1 = int(l[0] * 0.5)  # x坐标
@@ -133,7 +116,7 @@ class BaseOperate(object):
         self.driver.swipe(x1, y11, x1, y22, t)
 
     # 屏幕向右滑动
-    def swipRight(self, x1=0.05, x2=0.75, t=600):
+    def swipe_right(self, x1=0.05, x2=0.75, t=600):
         '''屏幕向右滑动'''
         l = self.getSize()
         y1 = int(l[1] * 0.5)
@@ -142,7 +125,7 @@ class BaseOperate(object):
         self.driver.swipe(x11, y1, x22, y1, t)
 
     # 屏幕向左滑动
-    def swipLeft(self, t=600):
+    def swipe_left(self, t=600):
         '''屏幕向左滑动'''
         l = self.getSize()
         x1 = int(l[0] * 0.75)

@@ -12,19 +12,11 @@ from app.models import UICaseReport
 from app.uicase.android_engine import AndroidTestEngine
 from app.uicase.ui_action2 import BaseOperate
 
+# 测试中的设备
 running_devices: dict = {}
 
 
-# isRunning = False
-# dr = None
-# actionOp = None
-#
-# isRunning: bool = False  # 标记服务运行中
-# platform = 1  # 平台1：安卓 2：ios
-# driver = None
-
-
-def setUp(**kwargs) -> (bool, str):
+def try_start_test(**kwargs) -> (bool, str):
     """
     platform：平台1：安卓 2：iOS
     is_android：bool标记是否是安卓
@@ -40,8 +32,8 @@ def setUp(**kwargs) -> (bool, str):
         _test_name = kwargs['single_test']['case']['desc']
         _report_dir = kwargs['single_test']['case']['name'] + strftime("%Y-%m-%d_%H-%M-%S")
     elif kwargs['caseset_test']:
-        _test_name = '用例集测试'
-        _report_dir = 'caseset_test-' + strftime("%Y-%m-%d_%H-%M-%S")
+        _test_name = kwargs['caseset_test']['desc']
+        _report_dir = kwargs['caseset_test']['name'] + strftime("%Y-%m-%d_%H-%M-%S")
     else:
         return False, '未发现测试用例'
 
@@ -54,18 +46,21 @@ def setUp(**kwargs) -> (bool, str):
         return False, f'该设备正在测试中：{running_devices[udid]}'
 
     running_devices[udid] = _test_name
-    succ, driver, desc = connect_appium(kwargs)
-    if not succ:
+    try:
+        succ, desc = start_appium_test(kwargs)
+        if not succ:
+            del running_devices[udid]
+        return succ, desc
+    except Exception as e:
         del running_devices[udid]
-    return succ, desc
+        return False, f'出异常了:{e}'
 
 
-def connect_appium(**kwargs):
+def start_appium_test(**kwargs):
     platform = kwargs['platform']
     if platform == 1:
         kwargs['is_android'] = True
-        # and_package='com.yiche.autoeasy', and_launch='',
-        return False, None, '稍等片刻还没弄了'
+        return android_connect(kwargs)
     elif platform == 2:
         kwargs['is_android'] = False
         return ios_connect(kwargs)
@@ -73,38 +68,59 @@ def connect_appium(**kwargs):
         return False, '未能识别的平台'
 
 
+def android_connect(**kwargs):
+    package = kwargs.get('android_package', 'com.yiche.autoeasy')
+    launch_ac = kwargs.get('android_launch', 'com.yiche.autoeasy.ADActivity')
+    # home_ac = kwargs.get('', '.MainActivity3')
+    device = kwargs['udid']
+    desired_caps = {}
+    desired_caps['platformName'] = 'Android'
+    desired_caps['udid'] = device
+    desired_caps['platformVersion'] = os.popen(
+        f'adb -s {device} shell getprop ro.build.version.release').read()
+    desired_caps['deviceName'] = os.popen(
+        f'adb -s {device} shell getprop ro.product.model').read()
+    desired_caps['noReset'] = 'true'
+    desired_caps['autoLaunch'] = 'true'
+    desired_caps['appPackage'] = package
+    desired_caps['appActivity'] = launch_ac
+    kwargs['driver'] = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)
+
+
+#
+# def set_up(self) -> (bool, str):
+#     try:
+#
+#     except Exception as e:
+#         print('启动服务异常:  {}'.format(str(e)))
+#         return False, '启动服务异常:  {}'.format(str(e))
+#     else:
+#         print("appium已启动服务")
+#         return True, '启动服务成功'
+
+
 def ios_connect(**kwargs):
-    try:
-        ios_bundleid = kwargs['ios_bundleid']
-        udid = kwargs['udid']
-        driver = webdriver.Remote(
-            command_executor='http://0.0.0.0:4723/wd/hub',
-            desired_capabilities={
-                'platformName': 'iOS',
-                'platformVersion': '12.2',
-                'deviceName': 'iPhone',
-                'bundleId': ios_bundleid,
-                'udid': udid,
-                "xcodeOrgId": "3WB4F23CG9",
-                "xcodeSigningId": "iPhone Developer",
-                "unicodeKeyboard": True,
-                "resetKeyboard": True
-            }
-        )
-        kwargs['driver'] = driver
-        engine(kwargs).start()
-        return True, driver, "启动服务成功"
-    except Exception as e:
-        print(e)
-        return False, None, "启动服务失败"
+    ios_bundleid = kwargs['ios_bundleid']
+    udid = kwargs['udid']
+    driver = webdriver.Remote(
+        command_executor='http://0.0.0.0:4723/wd/hub',
+        desired_capabilities={
+            'platformName': 'iOS',
+            'platformVersion': '12.2',
+            'deviceName': 'iPhone',
+            'bundleId': ios_bundleid,
+            'udid': udid,
+            "xcodeOrgId": "3WB4F23CG9",
+            "xcodeSigningId": "iPhone Developer",
+            "unicodeKeyboard": True,
+            "resetKeyboard": True
+        }
+    )
+    kwargs['driver'] = driver
+    async_case_runner(kwargs).start()
 
 
-def run_ui_cases(case: dict, steps: list):
-    global platform
-    engine(platform, case, steps).start()
-
-
-class engine(threading.Thread):
+class async_case_runner(threading.Thread):
 
     def __init__(self, **kwargs):
         threading.Thread.__init__(self)
@@ -140,12 +156,12 @@ class engine(threading.Thread):
         result['cases'] = []
 
         if self.is_single_test:
-            succ,report = self.test_one_case[self.test]
+            succ, report = self.test_one_case[self.test]
             result['succ'] = succ
             result['cases'].append(report)
         else:
-            for test in self.test:
-                succ,report = self.test_one_case[test]
+            for test in self.test['cases']:
+                succ, report = self.test_one_case[test]
                 result['succ'] = succ
                 result['cases'].append(report)
                 if not succ:
@@ -202,9 +218,8 @@ class engine(threading.Thread):
             })
             print(f'用例{case["desc"]}的步骤{step["desc"]}出现异常：{e}')
 
-        print(f'用例{case["desc"]}测试结束:结果{"成功"if report["case_succ"] else "失败"}')
-        return report["case_succ"],report
-
+        print(f'用例{case["desc"]}测试结束:结果{"成功" if report["case_succ"] else "失败"}')
+        return report["case_succ"], report
 
     def excuteLine(self, step: dict):
         if step is None:
@@ -225,18 +240,18 @@ class engine(threading.Thread):
         elif step['action'] == 'input':
             ele.send_keys(step['extraParam'])
         elif step['action'] == 'back':
-            pass
+            self.op.back()
         elif step['action'] == 'swipe_down':
-            pass
+            self.op.swipe_down()
         elif step['action'] == 'swipe_up':
-            pass
+            self.op.swipe_up()
         elif step['action'] == 'swipe_left':
-            pass
+            self.op.swipe_left()
         elif step['action'] == 'swipe_right':
-            pass
+            self.op.swipe_right()
         else:
             _action_succ = False
-        return _action_succ, f'成功执行：{step["desc"]}' if _action_succ else f'执行失败：{step["desc"]}，未知动作或其他'
+        return _action_succ, f'成功执行：{step["desc"]}' if _action_succ else f'执行失败：{step["desc"]}，未知Action或其他'
 
     def getscreen(self, pic_name) -> str:
         u"屏幕截图,保存截图到report\screenshot目录下"
@@ -249,7 +264,7 @@ class engine(threading.Thread):
                 os.makedirs(path)
                 # shutil.rmtree(path) #移除目录
 
-            filename = path + f'{pic_name+strftime("%Y-%m-%d_%H-%M-%S")}.png'  # 修改截图文件的存放路径为相对路径
+            filename = path + f'{pic_name + strftime("%Y-%m-%d_%H-%M-%S")}.png'  # 修改截图文件的存放路径为相对路径
             print('截图路径' + filename)
             self.driver.get_screenshot_as_file(filename)
             return filename

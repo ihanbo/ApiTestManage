@@ -332,16 +332,18 @@ class UIAction(db.Model):
             a1 = UIAction(action=u'click', action_name=u'点击')
             db.session.add(a1)
             db.session.commit()
-        action2 = UIAction.query.filter_by(action=u'swipe').first()
+        action2 = UIAction.query.filter_by(action=u'input').first()
         if action2 is None:
-            a2 = UIAction(action=u'swipe', action_name=u'滑动')
+            a2 = UIAction(action=u'input', action_name=u'输入')
             db.session.add(a2)
             db.session.commit()
-        action3 = UIAction.query.filter_by(action=u'input').first()
+
+        action3 = UIAction.query.filter_by(action=u'clear').first()
         if action3 is None:
-            a3 = UIAction(action=u'input', action_name=u'输入')
+            a3 = UIAction(action=u'clear', action_name=u'清除(输入框)')
             db.session.add(a3)
             db.session.commit()
+
         action4 = UIAction.query.filter_by(action=u'back').first()
         if action4 is None:
             a4 = UIAction(action=u'back', action_name=u'后退')
@@ -404,9 +406,10 @@ class UICaseStep(db.Model):
     xpath = db.Column(db.String(), comment='定位元素路径')
     resourceid = db.Column(db.String(), comment='定位元素id')
     text = db.Column(db.String(1024), comment='定位元素文本')
+    selector = db.Column(db.String(1024), comment='复合定位元素')
     action = db.Column(db.Integer, db.ForeignKey('ui_action.id'), comment='case行为')
     ui_action = db.relationship('UIAction', back_populates='ui_steps')
-    extraParam = db.Column(db.String(256), comment='描述')
+    extraParam = db.Column(db.String(1024), comment='描述')
     platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
     module_id = db.Column(db.Integer, db.ForeignKey('module.id'), comment='所属的接口模块id')
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
@@ -452,6 +455,14 @@ class UICase(db.Model):
     name = db.Column(db.String(256), nullable=True, comment='名称')
     num = db.Column(db.Integer(), nullable=True, comment='case序号')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
+
+
+class UI_Case_CaseSet(db.Model):
+    __tablename__ = 'ui_case_caseset'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    case_id = db.Column(db.Integer, db.ForeignKey('ui_case.id'), comment='步骤id')
+    num = db.Column(db.Integer(), nullable=True, comment='caseset中的顺序')
+    caseset_id = db.Column(db.Integer, db.ForeignKey('ui_case_set.id'), comment='caseid')
 
 
 class UI_CaseSet(db.Model):

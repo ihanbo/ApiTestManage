@@ -1,3 +1,5 @@
+import os
+
 from flask import jsonify, request, session
 from flask_login import current_user
 
@@ -213,9 +215,46 @@ def run_ui_cases():
     return jsonify({'msg': desc, 'status': 1 if succ else 0})
 
 
-api.route('/uicases/run_ui_caseset', methods=['POST'])
+@api.route('/uicases/get_devices', methods=['POST'])
+def get_devices():
+    """ 获取连接设备信息 """
+    data = request.json
+    platform = data.get('platform')
+    if platform == 1:
+        _devs = get_android_devices()
+    elif platform == 2:
+        _devs = get_ios_devices()
+    else:
+        return jsonify({'msg': '未识别的平台', 'status': 0})
+    return jsonify({'msg': '获取成功', 'data': _devs, 'status': 1})
 
 
+def get_android_devices() -> list:
+    rs: str = os.popen(
+        'adb devices').read()
+    result = []
+    if rs:
+        _ss: list = rs.split('\n')[1:-2]
+        rs = map(lambda item: item[:item.index('\t')], _ss)
+        _ss = list(rs)
+        for device in _ss:
+            model = os.popen(f'adb -s {device} shell getprop ro.product.model').read()
+            result.append({'device': device, 'name': model[:-1]})
+    return result
+
+
+def get_ios_devices() -> list:
+    rs: str = os.popen(
+        'idevice_id -l').read()
+    if rs:
+        _ss: list = rs.split('\n')
+        _ss = _ss[:-1]
+        mm = map(lambda device: {'device': device, 'name': '苹果设备'})
+        return list(mm)
+    return None
+
+
+@api.route('/uicases/run_ui_caseset', methods=['POST'])
 def run_ui_caseset():
     """ run case"""
     data = request.json
