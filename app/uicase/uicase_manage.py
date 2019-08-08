@@ -217,7 +217,7 @@ def run_ui_cases():
 def get_devices():
     """ 获取连接设备信息 """
     data = request.json
-    platform = data.get('platform')
+    platform = 2
     is_free = data.get('is_free')
     if platform == 1:
         _devs = get_android_devices(is_free)
@@ -273,9 +273,9 @@ def get_ios_devices(free: bool) -> list:
                 _ss = [x for x in _ss if x not in runing_device]
         mm = map(lambda device: {'device': device, 'name': '苹果设备',
                                  'state': '空闲' if free else ui_case_run.running_devices.get(device,
-                                                                                            '空闲')})
+                                                                                            '空闲')},_ss)
         return list(mm)
-    return None
+    return []
 
 
 @api.route('/uicases/run_ui_caseset', methods=['POST'])
