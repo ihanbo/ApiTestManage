@@ -1,12 +1,10 @@
 import os
 
-from flask import jsonify, request, session
-from flask_login import current_user
+from flask import jsonify, request, Response, make_response
 
 from app.api_1_0 import api, login_required
 from app.models import *
-from app.uicase import ui_run, ui_run2, android_engine, ui_case_run
-from app.uicase.ui_run import DpAppTests
+from app.uicase import ui_case_run
 from app.util.case_change.core import Excelparser
 from ..util.utils import *
 
@@ -215,7 +213,7 @@ def run_ui_cases():
     return jsonify({'msg': desc, 'status': 1 if succ else 0})
 
 
-@api.route('/uicases/get_devices', methods=['POST'])
+@api.route('/uicases/get_devices', methods=['POST', 'GET'])
 def get_devices():
     """ 获取连接设备信息 """
     data = request.json
@@ -225,6 +223,10 @@ def get_devices():
         _devs = get_android_devices(is_free)
     elif platform == 2:
         _devs = get_ios_devices(is_free)
+    elif platform == 3:
+        _devs_and = get_android_devices(is_free)
+        _devs_ios = get_ios_devices(is_free)
+        _devs = {'android': _devs_and, 'ios': _devs_ios}
     else:
         return jsonify({'msg': '未识别的平台', 'status': 0})
     return jsonify({'msg': '获取成功', 'data': _devs, 'status': 1})
@@ -233,7 +235,7 @@ def get_devices():
 def get_android_devices(free: bool) -> list:
     """
     :param free: 是否空闲
-    :return:
+    :return:[{decice:xxx,name:xxx,state:xxx}]
     """
     rs: str = os.popen(
         'adb devices').read()
@@ -351,6 +353,26 @@ def importSteps(case_id, caseSteps, project_id, module_id, platform_id):
         db.session.commit()
         num += 1
         numInCase += 1
+
+
+
+@api.route('/uicases/image', methods=['GET'])
+def get_image():
+    # mdict = {
+    #     'jpeg': 'image/jpeg',
+    #     'jpg': 'image/jpeg',
+    #     'png': 'image/png',
+    #     'gif': 'image/gif'
+    # }
+    # mime = mdict[((uri.split('/')[1]).split('.')[1])]
+
+    path = os.path.abspath(os.path.join(os.getcwd(), ".."))  # 获取父级路径的上一级目录路径
+    path = path + "/reports/1.png"
+    with open(path, 'rb') as f:
+        image = make_response(f.read())
+        resp = Response(image, mimetype="image/png")
+        return resp
+    return jsonify({'msg': 'ooooooooooo', 'status': 0})
 
 
 @api.route('/uicases/importCases', methods=['POST'])
