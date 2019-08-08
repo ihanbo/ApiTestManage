@@ -99,7 +99,7 @@ def add_task():
 
     time_config = data.get('timeConfig')
     if len(time_config.strip().split(' ')) != 6:
-        return jsonify({'msg': 'cron格式错误', 'status': 0})
+        return jsonify({'msg': '时间配置错误', 'status': 0})
 
     if task_id:
         old_task_data = Task.query.filter_by(id=task_id).first()

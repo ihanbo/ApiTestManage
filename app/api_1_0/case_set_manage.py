@@ -45,7 +45,7 @@ def add_set():
         if CaseSet.query.filter_by(name=name, project_id=project_id).first():
             return jsonify({'msg': '用例集名字重复', 'status': 0})
         else:
-            new_set = CaseSet(name=name, project_id=project_id, num=num)
+            new_set = CaseSet(name=name, project_id=project_id, num=num, environment_choice='first')
             db.session.add(new_set)
             db.session.commit()
             return jsonify({'msg': '新建成功', 'status': 1})
