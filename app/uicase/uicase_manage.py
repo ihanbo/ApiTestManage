@@ -220,16 +220,21 @@ def get_devices():
     """ 获取连接设备信息 """
     data = request.json
     platform = data.get('platform')
+    is_free = data.get('is_free')
     if platform == 1:
-        _devs = get_android_devices()
+        _devs = get_android_devices(is_free)
     elif platform == 2:
-        _devs = get_ios_devices()
+        _devs = get_ios_devices(is_free)
     else:
         return jsonify({'msg': '未识别的平台', 'status': 0})
     return jsonify({'msg': '获取成功', 'data': _devs, 'status': 1})
 
 
-def get_android_devices() -> list:
+def get_android_devices(free: bool) -> list:
+    """
+    :param free: 是否空闲
+    :return:
+    """
     rs: str = os.popen(
         'adb devices').read()
     result = []
@@ -237,19 +242,36 @@ def get_android_devices() -> list:
         _ss: list = rs.split('\n')[1:-2]
         rs = map(lambda item: item[:item.index('\t')], _ss)
         _ss = list(rs)
+        if free:
+            if ui_case_run.running_devices:
+                tmp = list(ui_case_run.running_devices.keys())
+                _ss = [x for x in _ss if x not in tmp]
         for device in _ss:
             model = os.popen(f'adb -s {device} shell getprop ro.product.model').read()
-            result.append({'device': device, 'name': model[:-1]})
+            state = '空闲' if free else ui_case_run.running_devices.get(device, '空闲')
+            result.append({'device': device, 'name': model[:-1], 'state': state})
+
     return result
 
 
-def get_ios_devices() -> list:
+def get_ios_devices(free: bool) -> list:
+    """
+    :param free: 是否空闲
+    :return:
+    """
     rs: str = os.popen(
         'idevice_id -l').read()
     if rs:
         _ss: list = rs.split('\n')
         _ss = _ss[:-1]
-        mm = map(lambda device: {'device': device, 'name': '苹果设备'})
+
+        if free:
+            if ui_case_run.running_devices:
+                runing_device = ui_case_run.running_devices.keys()
+                _ss = [x for x in _ss if x not in runing_device]
+        mm = map(lambda device: {'device': device, 'name': '苹果设备',
+                                 'state': '空闲' if free else ui_case_run.running_devices.get(device,
+                                                                                            '空闲')})
         return list(mm)
     return None
 
