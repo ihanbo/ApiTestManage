@@ -318,19 +318,6 @@ def run_ui_caseset():
     return jsonify({'msg': desc, 'status': 1 if succ else 0})
 
 
-def assemble_step(case_id) -> dict:
-    _case = UICase.query.filter_by(id=case_id).first()
-    _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
-    _steps_data = []
-    for s in _steps:
-        c: UICaseStep = UICaseStep.query.filter_by(module_id=_case.module_id,
-                                                   platform=_case.platform,
-                                                   id=s.ui_case_step_id).first()
-        st = {}
-        st.update(c.__dict__)
-        st['action'] = c.ui_action.action
-        _steps_data.append(st)
-    return {'case': _case, 'steps': _steps_data}
 
 
 def importSteps(case_id, caseSteps, project_id, module_id, platform_id):
