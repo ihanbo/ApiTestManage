@@ -132,7 +132,7 @@ def run_api_msg():
     project_name = data.get('projectName')
     config_id = data.get('configId')
     if not api_msg_data:
-        return jsonify({'msg': '请勾选信息后，再进行测试', 'status': 0})
+        return jsonify({'msg': '请勾选接口后，再进行测试', 'status': 0})
 
     # 前端传入的数据不是按照编号来的，所以这里重新排序
     api_ids = [(item['num'], item['apiMsgId']) for item in api_msg_data]
