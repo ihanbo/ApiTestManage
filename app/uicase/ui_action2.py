@@ -142,6 +142,16 @@ class BaseOperate(object):
         y2 = int(l[1] * Y2)  # 终点y坐标
         self.driver.swipe(x1, y1, x1, y2, t)  # t 表示滑屏的时间，5代巴枪默认为600ms
 
+
+    def wait_activity(self, activity=".MainActivity3", t=10) -> bool:
+        '''
+        等待某界面出现，android独有
+        不会抛异常，超时后返回False
+        '''
+        rs = self.driver.wait_activity(activity, t)
+        print(f'---wait_activity:结果:{rs} 当前ac:{self.driver.current_activity}')
+        return rs
+
     # def long_press_text(self, ele_text, duration=2500):
     #     '''根据text元素定位来长按操作'''
     #     try:

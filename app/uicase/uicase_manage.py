@@ -1,4 +1,5 @@
 import os
+from time import strftime
 
 from flask import jsonify, request, Response, make_response
 
@@ -44,7 +45,7 @@ def add_uicase():
                                   module_id=module_id).first() and caseName != old_data.name:
             return jsonify({'msg': '名字重复', 'status': 0})
 
-        list_data = Module.query.filter_by(id=module_id).first().ui_cases.all()
+        list_data = UI_Module.query.filter_by(id=module_id).first().ui_cases.all()
         num_sort(num, old_num, list_data, old_data)
         old_data.project_id = project_id
         old_data.module_id = module_id
@@ -139,7 +140,7 @@ def del_uicases():
     case_id = data.get('id')
     _data = UICase.query.filter_by(id=case_id).first()
 
-    project_id = Module.query.filter_by(id=_data.module_id).first().project_id
+    project_id = UI_Module.query.filter_by(id=_data.module_id).first().project_id
     # if current_user.id != UI_Project.query.filter_by(id=project_id).first().user_id:
     #     return jsonify({'msg': '不能删除别人项目下的case', 'status': 0})
 
@@ -185,6 +186,8 @@ def run_ui_cases():
     """ run case"""
     data = request.json
     case_id = data.get('id')
+    _udid = data.get('udid','00008020-001E11502E04002E')
+    _device_name = data.get('device_name','苹果设备')
     _case = UICase.query.filter_by(id=case_id).first()
     _project: UI_Project = UI_Project.query.filter_by(id=_case.project_id).first()
     _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
@@ -203,8 +206,11 @@ def run_ui_cases():
 
     # return jsonify({'msg': 'ok', 'status': 1})
     succ, desc = ui_case_run.try_start_test(platform=_case.platform,
-                                            # udid=data.get('udid'),
-                                            udid='d96c4503',
+                                            module_id=_case.module_id,
+                                            project_id=_case.project_id,
+                                            device_name=_device_name,
+                                            udid=_udid,
+                                            test_time=strftime("%Y-%m-%d_%H-%M-%S"),
                                             android_launch=_project.android_launch,
                                             android_package=_project.android_package,
                                             single_test={'case': _case.__dict__,
@@ -217,7 +223,7 @@ def run_ui_cases():
 def get_devices():
     """ 获取连接设备信息 """
     data = request.json
-    platform = 2
+    platform = data.get('platform')
     is_free = data.get('is_free')
     if platform == 1:
         _devs = get_android_devices(is_free)
