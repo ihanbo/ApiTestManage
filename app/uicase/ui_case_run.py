@@ -3,10 +3,16 @@ import json
 import os
 import traceback
 import unittest
+from telnetlib import EC
+
 from appium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from time import sleep, strftime
 import threading
+
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 from app import db
 from app.models import UICaseReport
 from app.uicase.android_engine import AndroidTestEngine
@@ -92,6 +98,7 @@ def android_connect(**kwargs):
     desired_caps['appPackage'] = package
     desired_caps['appActivity'] = launch_ac
     kwargs['driver'] = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)  # 驱动
+    kwargs['driver'].switch_to.alert.accept()
     async_case_runner(**kwargs).start()
 
 
@@ -196,6 +203,7 @@ class async_case_runner(threading.Thread):
         report['case_step'] = []
         try:
             for step in steps:
+                self.check_dialog_accept()
                 succ, desc = self.excuteLine(step)
                 report['case_step'].append({
                     'succ': succ,
@@ -274,6 +282,23 @@ class async_case_runner(threading.Thread):
         except Exception as e:
             print("---截图异常：" + str(e))
             return None
+
+    def check_dialog_accept(self):
+        if self.params['is_android']:
+            # 处理权限弹窗
+            loc = ("xpath", "//*[@text='始终允许']")
+            for i in range(3):
+                try:
+                    e = WebDriverWait(self.driver, 1, 0.5).until(
+                        EC.presence_of_element_located(loc))
+                    e.click()
+                except:
+                    pass
+        else:
+            try:
+                self.driver.switch_to.alert.accept()
+            except Exception:
+                print(str(Exception))
 
 # def run_ui_case(cases: list):
 #     engine.wait_home()
