@@ -7,7 +7,7 @@ api = Blueprint('api', __name__)
 from . import api_msg_manage, module_manage, project_manage, report_manage, result_summary, result_detail, result_case_set, build_in_manage, case_manage, login, \
     test_tool, task_manage, file_manage, config, suite_manage, case_set_manage, errors
 
-from app.uicase import platform_manage,uicase_step_manage,uicase_manage,ui_project_manage,ui_module_manage
+from app.uicase import platform_manage,uicase_step_manage,uicase_manage,ui_project_manage,ui_module_manage,ui_case_set_manage
 
 @api.before_request
 def before_request():

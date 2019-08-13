@@ -284,39 +284,6 @@ def get_ios_devices(free: bool) -> list:
     return []
 
 
-@api.route('/uicases/run_ui_caseset', methods=['POST'])
-def run_ui_caseset():
-    """ run case"""
-    data = request.json
-    case_id = data.get('id')
-    _case = UICase.query.filter_by(id=case_id).first()
-    _project: UI_Project = UI_Project.query.filter_by(id=_case.project_id).first()
-    _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
-    _steps_data = []
-    for s in _steps:
-        c: UICaseStep = UICaseStep.query.filter_by(module_id=_case.module_id,
-                                                   platform=_case.platform,
-                                                   id=s.ui_case_step_id).first()
-        st = {}
-        st.update(c.__dict__)
-        st['action'] = c.ui_action.action
-        _steps_data.append(st)
-
-    if _steps_data is None:
-        return jsonify({'msg': '未找到用例', 'status': 0})
-
-    single_test = {'case': _case.__dict__, 'steps': _steps_data}
-    succ, desc = ui_case_run.setUp(platform=_case.platform,
-                                   udid=data.get('udid'),
-                                   android_launch=_project.android_launch,
-                                   android_package=_project.android_package,
-                                   ios_bundle_id=_project.ios_bundle_id,
-                                   single_test=single_test)
-
-    # if succ:
-    #     ui_case_run.run_ui_cases(_case.__dict__, _steps_data)
-    return jsonify({'msg': desc, 'status': 1 if succ else 0})
-
 
 
 

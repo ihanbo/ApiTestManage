@@ -32,7 +32,7 @@ def try_start_test(**kwargs) -> (bool, str):
     is_android：bool标记是否是安卓
     udid：测试设备
     single_test:单条测试single_test['case'] 、single_test['steps']
-    caseset_test:用例集测试
+    caseset_test:用例集测试,caseset_test['cases']、caseset_test['name、desc']
     report_dir：目录存放地址
     test_desc：本次测试描述
 

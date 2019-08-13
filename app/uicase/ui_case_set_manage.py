@@ -53,10 +53,10 @@ def add_uicase_set():
             return jsonify({'msg': '名字重复', 'status': 0})
         else:
             new_cases = UI_CaseSet(num=num,
-                               name=caseSetName,
-                               desc=caseSetDesc,
-                               platform=platform,
-                               project_id=project_id)
+                                   name=caseSetName,
+                                   desc=caseSetDesc,
+                                   platform=platform,
+                                   project_id=project_id)
             db.session.add(new_cases)
             db.session.commit()
             updateUICaseInfo(new_cases.id, steps)
@@ -101,7 +101,7 @@ def list_uicase():
     else:
         case_data = UI_CaseSet.query.filter_by(project_id=project_id, platform=platform)
     pagination = case_data.order_by(UI_CaseSet.num.asc()).paginate(page, per_page=per_page,
-                                                               error_out=False)
+                                                                   error_out=False)
     case_data = pagination.items
     total = pagination.total
     _api = [{'id': c.id,
@@ -113,113 +113,106 @@ def list_uicase():
     return jsonify({'data': _api, 'total': total, 'status': 1})
 
 
-# @api.route('/uicases/delStep', methods=['POST'])
-# def del_step_in_uicase():
-#     """ 删除case中的step"""
-#     data = request.json
-#     case_id = data.get('id')
-#     _data = UicaseStepInfo.query.filter_by(id=case_id).first()
-#     db.session.delete(_data)
-#     return jsonify({'msg': '删除成功', 'status': 1})
-#
-#
-# @api.route('/uicases/delete', methods=['POST'])
-# def del_uicases():
-#     """ 删除case"""
-#     data = request.json
-#     case_id = data.get('id')
-#     _data = UICase.query.filter_by(id=case_id).first()
-#
-#     project_id = UI_Module.query.filter_by(id=_data.module_id).first().project_id
-#     # if current_user.id != UI_Project.query.filter_by(id=project_id).first().user_id:
-#     #     return jsonify({'msg': '不能删除别人项目下的case', 'status': 0})
-#
-#     # 同步删除接口信息下对应用例下的步骤信息
-#     for d in UicaseStepInfo.query.filter_by(ui_case_id=case_id).all():
-#         db.session.delete(d)
-#
-#     db.session.delete(_data)
-#
-#     return jsonify({'msg': '删除成功', 'status': 1})
-#
-#
-# @api.route('/uicases/editAndCopy', methods=['POST'])
-# def edit_uicases():
-#     """ 编辑case"""
-#     data = request.json
-#     case_id = data.get('id')
-#     _edit = UICase.query.filter_by(id=case_id).first()
-#     _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
-#     _steps_data = []
-#     for s in _steps:
-#         c = UICaseStep.query.filter_by(module_id=_edit.module_id, platform=_edit.platform,
-#                                        id=s.ui_case_step_id).first()
-#         _steps_data.append({'id': c.id,
-#                             'num': c.num,
-#                             'name': c.name,
-#                             'desc': c.desc})
-#
-#     platform = Platform.query.filter_by(id=_edit.platform).first()
-#     _data = {'name': _edit.name,
-#              'num': _edit.num,
-#              'desc': _edit.desc,
-#              'id': _edit.id,
-#              'num': _edit.num,
-#              'platform': platform.to_dict(),
-#              # 'steps': json.loads(json.dumps(_steps_data, default=info2dic))}
-#              'steps': _steps_data}
-#     return jsonify({'data': _data, 'status': 1})
-#
-#
-#
-#
-# @api.route('/uicases/run_ui_caseset', methods=['POST'])
-# def run_ui_caseset():
-#     """ run case"""
-#     data = request.json
-#     case_id = data.get('id')
-#     _case = UICase.query.filter_by(id=case_id).first()
-#     _project: UI_Project = UI_Project.query.filter_by(id=_case.project_id).first()
-#     _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
-#     _steps_data = []
-#     for s in _steps:
-#         c: UICaseStep = UICaseStep.query.filter_by(module_id=_case.module_id,
-#                                                    platform=_case.platform,
-#                                                    id=s.ui_case_step_id).first()
-#         st = {}
-#         st.update(c.__dict__)
-#         st['action'] = c.ui_action.action
-#         _steps_data.append(st)
-#
-#     if _steps_data is None:
-#         return jsonify({'msg': '未找到用例', 'status': 0})
-#
-#     single_test = {'case': _case.__dict__, 'steps': _steps_data}
-#     succ, desc = ui_case_run.setUp(platform=_case.platform,
-#                                    udid=data.get('udid'),
-#                                    android_launch=_project.android_launch,
-#                                    android_package=_project.android_package,
-#                                    ios_bundle_id=_project.ios_bundle_id,
-#                                    single_test=single_test)
-#
-#     # if succ:
-#     #     ui_case_run.run_ui_cases(_case.__dict__, _steps_data)
-#     return jsonify({'msg': desc, 'status': 1 if succ else 0})
-#
-#
-# def assemble_step(case_id) -> dict:
-#     _case = UICase.query.filter_by(id=case_id).first()
-#     _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
-#     _steps_data = []
-#     for s in _steps:
-#         c: UICaseStep = UICaseStep.query.filter_by(module_id=_case.module_id,
-#                                                    platform=_case.platform,
-#                                                    id=s.ui_case_step_id).first()
-#         st = {}
-#         st.update(c.__dict__)
-#         st['action'] = c.ui_action.action
-#         _steps_data.append(st)
-#     return {'case': _case, 'steps': _steps_data}
-#
-#
+@api.route('/uicase_set/delCase', methods=['POST'])
+def del_caseset_step_in_uicase():
+    """ 删除caseset中的case"""
+    data = request.json
+    _id = data.get('id')
+    _data = UI_Case_CaseSet.query.filter_by(id=_id).first()
+    db.session.delete(_data)
+    return jsonify({'msg': '删除成功', 'status': 1})
 
+
+@api.route('/uicase_set/delete', methods=['POST'])
+def del_uicaseset():
+    """ 删除caseset"""
+    data = request.json
+    _id = data.get('id')
+    _data = UI_CaseSet.query.filter_by(id=_id).first()
+
+    project_id = UI_Module.query.filter_by(id=_data.module_id).first().project_id
+    # if current_user.id != UI_Project.query.filter_by(id=project_id).first().user_id:
+    #     return jsonify({'msg': '不能删除别人项目下的case', 'status': 0})
+
+    # 同步删除接口信息下对应用例下的步骤信息
+    for d in UI_Case_CaseSet.query.filter_by(caseset_id=_id).all():
+        db.session.delete(d)
+    db.session.delete(_data)
+
+    return jsonify({'msg': '删除成功', 'status': 1})
+
+
+@api.route('/uicase_set/editAndCopy', methods=['POST'])
+def edit_uicaseset():
+    """ 编辑caseset"""
+    data = request.json
+    caseSet_id = data.get('id')
+    _edit = UI_CaseSet.query.filter_by(id=caseSet_id).first()
+    _case_caseset = UI_Case_CaseSet.query.filter_by(caseset_id=caseSet_id).all()
+    _cases_data = []
+    for s in _case_caseset:
+        c = UICase.query.filter_by(project_id=_edit.project_id, platform=_edit.platform,
+                                   id=s.case_id).first()
+        _cases_data.append({'id': c.id,
+                            'num': c.num,
+                            'name': c.name,
+                            'desc': c.desc})
+
+    platform = Platform.query.filter_by(id=_edit.platform).first()
+    _data = {'name': _edit.name,
+             'num': _edit.num,
+             'desc': _edit.desc,
+             'id': _edit.id,
+             'num': _edit.num,
+             'platform': platform.to_dict(),
+             # 'steps': json.loads(json.dumps(_steps_data, default=info2dic))}
+             'steps': _cases_data}
+    return jsonify({'data': _data, 'status': 1})
+
+
+@api.route('/uicase_Set/run_caseset', methods=['POST'])
+def run_ui_caseset():
+    """ run case"""
+    data = request.json
+    caseset_id = data.get('id')
+    _caseset: UI_CaseSet = UI_CaseSet.query.filter_by(id=caseset_id).first()
+    _project: UI_Project = UI_Project.query.filter_by(id=_caseset.project_id).first()
+    _caseset_cases = UI_Case_CaseSet.query.filter_by(caseset_id=caseset_id).all()
+    _cases_data = []
+    for s in _caseset_cases:
+        casedata = assemble_case_with_step(s.case_id)
+        # c: UICase = UICase.query.filter_by(platform=_caseset.platform,
+        #                                            id=s.case_id).first()
+        _cases_data.append(casedata)
+
+    if not _cases_data:
+        return jsonify({'msg': '未找到用例', 'status': 0})
+    caseset_test = {'name': _caseset.name, 'desc': _caseset.desc, 'cases': _cases_data}
+
+    succ, desc = ui_case_run.setUp(platform=_caseset.platform,
+                                   udid=data.get('udid'),
+                                   android_launch=_project.android_launch,
+                                   android_package=_project.android_package,
+                                   ios_bundle_id=_project.ios_bundle_id,
+                                   caseset_test=caseset_test)
+
+    # if succ:
+    #     ui_case_run.run_ui_cases(_case.__dict__, _steps_data)
+    return jsonify({'msg': desc, 'status': 1 if succ else 0})
+
+
+def assemble_case_with_step(case_id) -> dict:
+    _case = UICase.query.filter_by(id=case_id).first()
+    _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
+    _steps_data = []
+    for s in _steps:
+        c: UICaseStep = UICaseStep.query.filter_by(module_id=_case.module_id,
+                                                   platform=_case.platform,
+                                                   id=s.ui_case_step_id).first()
+        st = {}
+        st.update(c.__dict__)
+        st['action'] = c.ui_action.action
+        _steps_data.append(st)
+    return {'case': _case, 'steps': _steps_data}
+#
+#
