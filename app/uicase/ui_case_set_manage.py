@@ -82,7 +82,7 @@ def list_uicase_set():
     """ 查接口信息 """
     data = request.json
     project_name = data.get('projectName')
-    case_name = data.get('caseName')
+    case_set_name = data.get('caseSetName')
     platform = data.get('platform')
     page = data.get('page') if data.get('page') else 1
     per_page = data.get('sizePage') if data.get('sizePage') else 20
@@ -93,9 +93,9 @@ def list_uicase_set():
     if not platform:
         return jsonify({'msg': '请先选择操作系统'.format(project_name), 'status': 0})
 
-    if case_name:
+    if case_set_name:
         case_data = UI_CaseSet.query.filter_by(project_id=project_id, platform=platform).filter(
-            UI_CaseSet.name.like('%{}%'.format(case_name)))
+            UI_CaseSet.name.like('%{}%'.format(case_set_name)))
         # total = len(case_data)
         if not case_data:
             return jsonify({'msg': '没有该用例集', 'status': 0})
@@ -171,7 +171,7 @@ def edit_uicaseset():
     return jsonify({'data': _data, 'status': 1})
 
 
-@api.route('/uicase_Set/run_caseset', methods=['POST'])
+@api.route('/uicase_set/run_caseset', methods=['POST'])
 def run_ui_caseset():
     """ run case"""
     data = request.json
