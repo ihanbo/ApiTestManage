@@ -65,6 +65,7 @@ def add_uicase_set():
 
 
 def updateUICaseInfo(id, steps):
+    """ case步骤 """
     for d in UI_Case_CaseSet.query.filter_by(caseset_id=id).all():
         db.session.delete(d)
 
@@ -77,7 +78,7 @@ def updateUICaseInfo(id, steps):
 
 
 @api.route('/uicase_set/list', methods=['POST'])
-def list_uicase():
+def list_uicase_set():
     """ 查接口信息 """
     data = request.json
     project_name = data.get('projectName')
@@ -114,7 +115,7 @@ def list_uicase():
 
 
 @api.route('/uicase_set/delCase', methods=['POST'])
-def del_caseset_step_in_uicase():
+def del_case_step_in_caseset():
     """ 删除caseset中的case"""
     data = request.json
     _id = data.get('id')
