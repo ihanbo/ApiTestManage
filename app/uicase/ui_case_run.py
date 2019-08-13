@@ -98,7 +98,6 @@ def android_connect(**kwargs):
     desired_caps['appPackage'] = package
     desired_caps['appActivity'] = launch_ac
     kwargs['driver'] = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)  # 驱动
-    kwargs['driver'].switch_to.alert.accept()
     async_case_runner(**kwargs).start()
 
 
