@@ -66,6 +66,7 @@ def try_start_test(**kwargs) -> (bool, str):
         return succ, desc
     except Exception as e:
         del running_devices[udid]
+        traceback.print_exc()
         return False, f'出异常了:{str(e)}'
 
 
@@ -226,6 +227,7 @@ class async_case_runner(threading.Thread):
                 'stepName': step['name'],
                 'stepDesc': step['desc']
             })
+            traceback.print_exc()
             print(f'--用例{case["desc"]}的步骤{step["desc"]}出现异常：{str(e)}')
 
         print(f'-用例{case["desc"]}结束测试: 结果{"成功" if report["case_succ"] else "失败"}')
