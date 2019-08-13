@@ -19,6 +19,8 @@ from app.uicase.android_engine import AndroidTestEngine
 from app.uicase.ui_action2 import BaseOperate
 
 # 测试中的设备
+from app.util.global_variable import REPORT_UI_ADDRESS
+
 running_devices: dict = {}
 
 
@@ -208,7 +210,7 @@ class async_case_runner(threading.Thread):
                 report['case_step'].append({
                     'succ': succ,
                     'excute': desc,
-                    'pic': None if succ else self.getscreen(step['name']),
+                    'pic': None if succ else f"ui_reports/{self.params['report_dir']}/{self.getscreen(step['name'])}",
                     'stepName': step['name'],
                     'stepDesc': step['desc']
                 })
@@ -223,7 +225,7 @@ class async_case_runner(threading.Thread):
             report['case_step'].append({
                 'succ': False,
                 'excute': str(e),
-                'pic': self.getscreen(step['name']),
+                'pic': f"ui_reports/{self.params['report_dir']}/{self.getscreen(step['name'])}",
                 'stepName': step['name'],
                 'stepDesc': step['desc']
             })
@@ -268,18 +270,18 @@ class async_case_runner(threading.Thread):
     def getscreen(self, pic_name) -> str:
         u"屏幕截图,保存截图到report\screenshot目录下"
         try:
-            path = os.path.abspath(os.path.join(os.getcwd(), ".."))  # 获取父级路径的上一级目录路径
 
-            path = path + f"/reports/{self.params['report_dir']}/"
+            path = f"{REPORT_UI_ADDRESS}/{self.params['report_dir']}/"
 
             if not os.path.exists(path):
                 os.makedirs(path)
                 # shutil.rmtree(path) #移除目录
 
-            filename = path + f'{pic_name + strftime("%Y-%m-%d_%H-%M-%S")}.png'  # 修改截图文件的存放路径为相对路径
+            _f_pic_name = f'{pic_name + strftime("%Y-%m-%d_%H-%M-%S")}.png'
+            filename = path + _f_pic_name
             print('---截图路径' + filename)
             self.driver.get_screenshot_as_file(filename)
-            return filename
+            return _f_pic_name
         except Exception as e:
             print("---截图异常：" + str(e))
             return None
