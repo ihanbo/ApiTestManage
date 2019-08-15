@@ -51,13 +51,13 @@ def add_uicase_step():
         if UICaseStep.query.filter_by(name=caseStepName, module_id=module_id).first() and caseStepName != old_data.name:
             return jsonify({'msg': '名字重复', 'status': 0})
 
-        list_data = Module.query.filter_by(id=module_id).first().ui_cases.all()
+        list_data = UI_Module.query.filter_by(id=module_id).first().ui_case_steps.all()
         num_sort(num, old_num, list_data, old_data)
         old_data.project_id = project_id
         old_data.module_id = module_id
         old_data.name = caseStepName
         old_data.desc = desc
-        old_data.extract = extraParam
+        old_data.extraParam = extraParam
         old_data.platform = platform
         old_data.xpath = xpath
         old_data.resourceid = resourceid
@@ -94,7 +94,7 @@ def del_uicase_step():
     case_step_id = data.get('id')
     _data = UICaseStep.query.filter_by(id=case_step_id).first()
 
-    project_id = Module.query.filter_by(id=_data.module_id).first().project_id
+    project_id = UI_Module.query.filter_by(id=_data.module_id).first().project_id
     # if current_user.id != UI_Project.query.filter_by(id=project_id).first().user_id:
     #     return jsonify({'msg': '不能删除别人项目下的接口', 'status': 0})
 

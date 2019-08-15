@@ -1,6 +1,8 @@
 import json
+import os
+from app.util.global_variable import REPORT_UI_ADDRESS
 
-from flask import jsonify, request
+from flask import jsonify, request, url_for
 
 from app.api_1_0 import api
 from app.models import *
@@ -36,6 +38,7 @@ def get_pro_gather_ui():
 @login_required
 def find_project_ui():
     """ 查找项目 """
+    print(f'-->static path: {REPORT_UI_ADDRESS}')
     data = request.json
     project_name = data.get('projectName')
     # a = db.session.execute(r'''

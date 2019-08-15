@@ -314,7 +314,6 @@ class UIAction(db.Model):
     id = db.Column(db.Integer, primary_key=True, comment='主键，自增')
     action = db.Column(db.String(64), comment='行为', unique=True)
     action_name = db.Column(db.String(64), comment='行为名称')
-    ui_steps = db.relationship('UICaseStep', back_populates='ui_action')
 
     def action_to_dict(self):
         '''将对象转换为字典数据'''
@@ -408,10 +407,10 @@ class UICaseStep(db.Model):
     text = db.Column(db.String(1024), comment='定位元素文本')
     ui_selector = db.Column(db.String(1024), comment='复合定位元素')
     action = db.Column(db.Integer, db.ForeignKey('ui_action.id'), comment='case行为')
-    ui_action = db.relationship('UIAction', back_populates='ui_steps')
+    ui_action = db.relationship('UIAction')
     extraParam = db.Column(db.String(1024), comment='描述')
     platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
-    module_id = db.Column(db.Integer, db.ForeignKey('module.id'), comment='所属的接口模块id')
+    module_id = db.Column(db.Integer, db.ForeignKey('ui_module.id'), comment='所属的接口模块id')
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
@@ -441,6 +440,7 @@ class UI_Module(db.Model):
     num = db.Column(db.Integer(), nullable=True, comment='模块序号')
     project_id = db.Column(db.Integer, db.ForeignKey('ui_project.id'), comment='所属的项目id')
     ui_cases = db.relationship('UICase', order_by='UICase.num.asc()', lazy='dynamic')
+    ui_case_steps = db.relationship('UICaseStep', order_by='UICaseStep.num.asc()', lazy='dynamic')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
@@ -451,13 +451,14 @@ class UICase(db.Model):
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     module_id = db.Column(db.Integer, db.ForeignKey('ui_module.id'), comment='所属的接口模块id')
     platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
-    caseset_id = db.Column(db.Integer, db.ForeignKey('ui_case_set.id'), comment='对应用例集')
+    # caseset_id = db.Column(db.Integer, db.ForeignKey('ui_case_set.id'), comment='对应用例集')
     name = db.Column(db.String(256), nullable=True, comment='名称')
     num = db.Column(db.Integer(), nullable=True, comment='case序号')
     desc = db.Column(db.String(256), nullable=True, comment='描述')
 
 
 class UI_Case_CaseSet(db.Model):
+    """caseset和case中间表多对多"""
     __tablename__ = 'ui_case_caseset'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
     case_id = db.Column(db.Integer, db.ForeignKey('ui_case.id'), comment='步骤id')
@@ -468,10 +469,11 @@ class UI_Case_CaseSet(db.Model):
 class UI_CaseSet(db.Model):
     __tablename__ = 'ui_case_set'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
     num = db.Column(db.Integer(), nullable=True, comment='用例集合序号')
-    name = db.Column(db.String(256), nullable=True, comment='用例集名称')
+    name = db.Column(db.String(256), nullable=True, comment='用例集名称：英文')
+    desc = db.Column(db.String(256), nullable=True, comment='用例集描述：中文')
     project_id = db.Column(db.Integer, db.ForeignKey('ui_project.id'), comment='所属的项目id')
-    cases = db.relationship('UICase', order_by='UICase.num.asc()', lazy='dynamic')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 

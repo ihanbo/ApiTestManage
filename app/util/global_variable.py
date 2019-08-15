@@ -690,7 +690,7 @@ CONTENT_TYPE = {
     '.zoo': 'application/x-zoo',
 }
 REPORT_ADDRESS = os.path.abspath('..') + r'/reports/'
-REPORT_UI_ADDRESS = os.path.abspath('..') + r'/reports/ui_report/'
+REPORT_UI_ADDRESS = os.path.abspath('.') + r'/ui_reports'
 LOG_ADDRESS = os.path.abspath('..') + r'/logs/'
 TEMP_REPORT = os.path.abspath('.') + r'/app/util/report'
 FUNC_ADDRESS = os.path.abspath('.') + r'/func_list'
