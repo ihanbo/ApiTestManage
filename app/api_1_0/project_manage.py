@@ -64,8 +64,10 @@ def find_project():
     # SELECT * FROM "project" WHERE name='测试平台';
     # ''')
     # print(a.first())
-    page = data.get('page') if data.get('page') else 1
-    per_page = data.get('sizePage') if data.get('sizePage') else 10
+    # page = data.get('page') if data.get('page') else 1
+    # per_page = data.get('sizePage') if data.get('sizePage') else 10
+    page = 1
+    per_page = 100
     user_data = [{'user_id': u.id, 'user_name': u.name} for u in User.query.all()]
     if project_name:
         _data = Project.query.filter(Project.name.like('%{}%'.format(project_name))).all()
