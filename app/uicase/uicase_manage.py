@@ -97,17 +97,21 @@ def list_uicase():
     per_page = data.get('sizePage') if data.get('sizePage') else 20
     if not project_name:
         return jsonify({'msg': '请选择项目', 'status': 0})
-    if not module_id:
-        return jsonify({'msg': '请先创建{}项目下的模块'.format(project_name), 'status': 0})
     if not platform:
         return jsonify({'msg': '请先选择操作系统'.format(project_name), 'status': 0})
 
     if case_name:
-        case_data = UICase.query.filter_by(module_id=module_id, platform=platform).filter(
-            UICase.name.like('%{}%'.format(case_name)))
+        if module_id:
+            case_data = UICase.query.filter_by(module_id=module_id, platform=platform).filter(
+                UICase.name.like('%{}%'.format(case_name)))
+        else:
+            case_data = UICase.query.filter_by(platform=platform).filter(
+                UICase.name.like('%{}%'.format(case_name)))
         # total = len(case_data)
         if not case_data:
             return jsonify({'msg': '没有该接口信息', 'status': 0})
+    elif not module_id:
+        case_data = UICase.query.filter_by(platform=platform)
     else:
         case_data = UICase.query.filter_by(module_id=module_id, platform=platform)
     pagination = case_data.order_by(UICase.num.asc()).paginate(page, per_page=per_page,
@@ -186,8 +190,8 @@ def run_ui_cases():
     """ run case"""
     data = request.json
     case_id = data.get('id')
-    _udid = data.get('udid','00008020-001E11502E04002E')
-    _device_name = data.get('device_name','苹果设备')
+    _udid = data.get('udid', '00008020-001E11502E04002E')
+    _device_name = data.get('device_name', '苹果设备')
     _case = UICase.query.filter_by(id=case_id).first()
     _project: UI_Project = UI_Project.query.filter_by(id=_case.project_id).first()
     _steps = UicaseStepInfo.query.filter_by(ui_case_id=case_id).all()
@@ -279,12 +283,10 @@ def get_ios_devices(free: bool) -> list:
                 _ss = [x for x in _ss if x not in runing_device]
         mm = map(lambda device: {'device': device, 'name': '苹果设备',
                                  'state': '空闲' if free else ui_case_run.running_devices.get(device,
-                                                                                            '空闲')},_ss)
+                                                                                            '空闲')},
+                 _ss)
         return list(mm)
     return []
-
-
-
 
 
 def importSteps(case_id, caseSteps, project_id, module_id, platform_id):
@@ -313,7 +315,6 @@ def importSteps(case_id, caseSteps, project_id, module_id, platform_id):
         db.session.commit()
         num += 1
         numInCase += 1
-
 
 
 @api.route('/uicases/image', methods=['GET'])

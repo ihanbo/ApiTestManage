@@ -40,11 +40,11 @@ def try_start_test(**kwargs) -> (bool, str):
 
     driver：测试驱动
     """
-    if kwargs['single_test']:
+    if kwargs.get('single_test'):
         _test_desc = kwargs['single_test']['case']['desc']
         _report_dir = kwargs['single_test']['case']['name'] + strftime("%Y-%m-%d_%H-%M-%S")
         _test_name = kwargs['single_test']['case']['name']
-    elif kwargs['caseset_test']:
+    elif kwargs.get('caseset_test'):
         _test_desc = kwargs['caseset_test']['desc']
         _report_dir = kwargs['caseset_test']['name'] + strftime("%Y-%m-%d_%H-%M-%S")
         _test_name = kwargs['caseset_test']['name']
@@ -221,11 +221,12 @@ class async_case_runner(threading.Thread):
                     print(f'--执行完成步骤： {step["desc"]}，休眠2秒')
                     sleep(3)
         except Exception as e:
+            # NoSuchElementException
             report['case_succ'] = False
             report['case_step'].append({
                 'succ': False,
                 'excute': str(e),
-                'pic': f"ui_reports/{self.params['report_dir']}/{self.getscreen(step['name'])}",
+                'pic': f"ui_reports/{self.params['report_dir']}/{self.getscreen(step['name'], needlog=True)}",
                 'stepName': step['name'],
                 'stepDesc': step['desc']
             })
@@ -248,6 +249,9 @@ class async_case_runner(threading.Thread):
         elif step['text']:
             ele = self.op.find_text(step['text'])
 
+        if ele is None:
+            return False, '未找到指定元素'
+
         _action_succ = True
         if step['action'] == 'click':
             ele.click()
@@ -265,9 +269,9 @@ class async_case_runner(threading.Thread):
             self.op.swipe_right()
         else:
             _action_succ = False
-        return _action_succ, f'--成功执行：{step["desc"]}' if _action_succ else f'执行失败：{step["desc"]}，未知Action或其他'
+        return _action_succ, f'--成功执行：{step["desc"]}' if _action_succ else f'执行失败：{step["desc"]}，未知Action'
 
-    def getscreen(self, pic_name) -> str:
+    def getscreen(self, file_name, needlog=False) -> str:
         u"屏幕截图,保存截图到report\screenshot目录下"
         try:
 
@@ -277,10 +281,16 @@ class async_case_runner(threading.Thread):
                 os.makedirs(path)
                 # shutil.rmtree(path) #移除目录
 
-            _f_pic_name = f'{pic_name + strftime("%Y-%m-%d_%H-%M-%S")}.png'
-            filename = path + _f_pic_name
-            print('---截图路径' + filename)
-            self.driver.get_screenshot_as_file(filename)
+            file_name = file_name + strftime("%Y-%m-%d_%H-%M-%S")
+            _f_pic_name = file_name + '.png'
+            pic_filename = path + _f_pic_name
+            print('---截图路径' + pic_filename)
+            self.driver.get_screenshot_as_file(pic_filename)
+            if needlog:
+                if self.params['is_android']:
+                    os.popen(f'adb logcat -t 300 > {path + file_name + ".log"}')
+                else:
+                    pass
             return _f_pic_name
         except Exception as e:
             print("---截图异常：" + str(e))
