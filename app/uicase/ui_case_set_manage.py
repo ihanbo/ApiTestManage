@@ -192,6 +192,8 @@ def run_ui_caseset():
 
     succ, desc = ui_case_run.try_start_test(platform=_caseset.platform,
                                    udid=data.get('udid'),
+                                   device_name=data.get('device_name'),
+                                   test_time=strftime("%Y-%m-%d_%H-%M-%S"),
                                    android_launch=_project.android_launch,
                                    android_package=_project.android_package,
                                    ios_bundle_id=_project.ios_bundle_id,
@@ -214,6 +216,6 @@ def assemble_case_with_step(case_id) -> dict:
         st.update(c.__dict__)
         st['action'] = c.ui_action.action
         _steps_data.append(st)
-    return {'case': _case, 'steps': _steps_data}
+    return {'case': _case.__dict__, 'steps': _steps_data}
 #
 #

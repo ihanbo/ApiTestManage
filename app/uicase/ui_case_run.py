@@ -135,10 +135,10 @@ class async_case_runner(threading.Thread):
 
         self.params = kwargs
         self.driver: webdriver = kwargs['driver']
-        if kwargs['single_test']:
+        if kwargs.get('single_test'):
             self.is_single_test = True
             self.test_case = kwargs['single_test']
-        elif kwargs['caseset_test']:
+        elif kwargs.get('caseset_test'):
             self.is_single_test = False
             self.test_case = kwargs['caseset_test']
         else:
@@ -171,7 +171,7 @@ class async_case_runner(threading.Thread):
             result['cases'].append(report)
         else:
             for test in self.test_case['cases']:
-                succ, report = self.test_one_case[test]
+                succ, report = self.test_one_case(test['case'])
                 result['succ'] = succ
                 result['cases'].append(report)
                 if not succ:
