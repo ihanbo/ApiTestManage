@@ -190,10 +190,12 @@ def run_ui_caseset():
         return jsonify({'msg': '未找到用例', 'status': 0})
     caseset_test = {'name': _caseset.name, 'desc': _caseset.desc, 'cases': _cases_data}
 
+
     succ, desc = ui_case_run.try_start_test(platform=_caseset.platform,
                                             udid=data.get('udid'),
                                             device_name=data.get('device_name'),
                                             project_id=_caseset.project_id,
+                                            func_file=_project.func_file,
                                             test_time=strftime("%Y-%m-%d_%H-%M-%S"),
                                             android_launch=_project.android_launch,
                                             android_package=_project.android_package,

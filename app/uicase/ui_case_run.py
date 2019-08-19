@@ -1,7 +1,9 @@
 # coding=UTF-8
+import importlib
 import json
 import os
 import traceback
+import types
 import unittest
 from telnetlib import EC
 
@@ -146,15 +148,38 @@ class async_case_runner(threading.Thread):
             global running_devices
             del running_devices[kwargs['udid']]
             self.driver.quit()
+        if kwargs.get('func_file'):
+            func_file = kwargs['func_file'].replace('.py', '')
+            func_list = importlib.reload(importlib.import_module('func_list.{}'.format(func_file)))
+            self.ui_functions_map = {name: item for name, item in vars(func_list).items()
+                                     if isinstance(item, types.FunctionType)}
         self.op = BaseOperate(kwargs['platform'], self.driver)
 
     def run(self):  # 需要执行的case
         print('开始测试，等待App启动')
-        if self.params['is_android']:
-            home_ac = self.params.get('home_ac', '.MainActivity3')
-            self.op.wait_activity(activity=home_ac)
+
+        if hasattr(self, 'ui_functions_map'):
+            """
+            应用级别的set_up方法，名字固定：start_app_setup
+            """
+            setup_func = self.ui_functions_map.get('start_app_setup')
+            if setup_func:
+                sleep(5)
+                try:
+                    setup_func(driver=self.driver, op=self.op, platform=self.params['platform'])
+                except Exception as e:
+                    pass
+            else:
+                sleep(7)
+
         else:
             sleep(7)
+
+        # if self.params['is_android']:
+        #     home_ac = self.params.get('home_ac', '.MainActivity3')
+        #     self.op.wait_activity(activity=home_ac)
+        # else:
+        #     sleep(7)
         print('App已启动')
         result = {}
         result['report_dir'] = self.params['report_dir']
@@ -196,15 +221,30 @@ class async_case_runner(threading.Thread):
         db.session.commit()
 
     def test_one_case(self, test: dict):
+        """
+        单条用例测试
+        :param test:
+        :return:
+        """
         case = test['case']
         steps = test['steps']
+
         print(f'-用例{case["desc"]}开始测试')
         report = {'case_name': case['name'], 'case_desc': case['desc'], 'case_succ': True}
 
         report['case_step'] = []
         try:
             for step in steps:
-                self.check_dialog_accept()
+
+                # self.check_dialog_accept() 改为setup
+
+                if step.get('set_up'):
+                    """
+                    有set_up的话 先调用set_up方法
+                    """
+                    self.set_up(step)
+                    sleep(2)
+
                 succ, desc = self.excuteLine(step)
                 report['case_step'].append({
                     'succ': succ,
@@ -311,6 +351,11 @@ class async_case_runner(threading.Thread):
                 self.driver.switch_to.alert.accept()
             except Exception:
                 print(str(Exception))
+
+    def set_up(self, step):
+        func = self.ui_functions_map.get(step['set_up'])
+        if func:
+            func(step=step, driver=self.driver, op=self.op, platform=self.params['platform'])
 
 # def run_ui_case(cases: list):
 #     engine.wait_home()

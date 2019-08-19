@@ -214,6 +214,7 @@ def run_ui_cases():
                                             project_id=_case.project_id,
                                             device_name=_device_name,
                                             udid=_udid,
+                                            func_file=_project.func_file,
                                             test_time=strftime("%Y-%m-%d_%H-%M-%S"),
                                             android_launch=_project.android_launch,
                                             android_package=_project.android_package,
