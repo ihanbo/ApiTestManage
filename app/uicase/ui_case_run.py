@@ -171,7 +171,7 @@ class async_case_runner(threading.Thread):
             result['cases'].append(report)
         else:
             for test in self.test_case['cases']:
-                succ, report = self.test_one_case(test['case'])
+                succ, report = self.test_one_case(test)
                 result['succ'] = succ
                 result['cases'].append(report)
                 if not succ:
@@ -191,8 +191,7 @@ class async_case_runner(threading.Thread):
             result=result_str,
             report_dir=result['report_dir'],
             platform=self.params['platform'],
-            project_id=self.params['project_id'],
-            module_id=self.params['module_id'])
+            project_id=self.params['project_id'])
         db.session.add(case_report)
         db.session.commit()
 

@@ -191,13 +191,14 @@ def run_ui_caseset():
     caseset_test = {'name': _caseset.name, 'desc': _caseset.desc, 'cases': _cases_data}
 
     succ, desc = ui_case_run.try_start_test(platform=_caseset.platform,
-                                   udid=data.get('udid'),
-                                   device_name=data.get('device_name'),
-                                   test_time=strftime("%Y-%m-%d_%H-%M-%S"),
-                                   android_launch=_project.android_launch,
-                                   android_package=_project.android_package,
-                                   ios_bundle_id=_project.ios_bundle_id,
-                                   caseset_test=caseset_test)
+                                            udid=data.get('udid'),
+                                            device_name=data.get('device_name'),
+                                            project_id=_caseset.project_id,
+                                            test_time=strftime("%Y-%m-%d_%H-%M-%S"),
+                                            android_launch=_project.android_launch,
+                                            android_package=_project.android_package,
+                                            ios_bundle_id=_project.ios_bundle_id,
+                                            caseset_test=caseset_test)
 
     # if succ:
     #     ui_case_run.run_ui_cases(_case.__dict__, _steps_data)
