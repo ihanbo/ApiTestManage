@@ -236,7 +236,11 @@ class async_case_runner(threading.Thread):
         try:
             for step in steps:
 
-                # self.check_dialog_accept() 改为setup
+                if not self.params['is_android']:
+                    """
+                    检查ios有弹窗的话确认
+                    """
+                    self.check_dialog_accept()
 
                 if step.get('set_up'):
                     """
@@ -245,20 +249,18 @@ class async_case_runner(threading.Thread):
                     self.set_up(step)
                     sleep(2)
 
-                succ, desc = self.excuteLine(step)
+                print(f'--开始执行步骤： {step["desc"]}')
+                desc = self.excuteLine(step)
                 report['case_step'].append({
-                    'succ': succ,
+                    'succ': desc,
                     'excute': desc,
-                    'pic': None if succ else f"ui_reports/{self.params['report_dir']}/{self.getscreen(step['name'])}",
+                    'pic': None ,
                     'stepName': step['name'],
                     'stepDesc': step['desc']
                 })
-                if not succ:
-                    report['case_succ'] = False
-                    break
-                else:
-                    print(f'--执行完成步骤： {step["desc"]}，休眠2秒')
-                    sleep(3)
+
+                print(f'--执行完成步骤： {step["desc"]}，休眠2秒')
+                sleep(3)
         except Exception as e:
             # NoSuchElementException
             report['case_succ'] = False
@@ -276,9 +278,6 @@ class async_case_runner(threading.Thread):
         return report["case_succ"], report
 
     def excuteLine(self, step: dict):
-        if step is None:
-            return False, '无效行'
-        print(f'--执行 步骤： {step["desc"]} ,action={step["action"]}')
 
         ele: WebElement = None
         if step['resourceid']:
@@ -287,11 +286,9 @@ class async_case_runner(threading.Thread):
             ele = self.op.find_xpath(step['xpath'])
         elif step['text']:
             ele = self.op.find_text(step['text'])
+        elif step['ui_selector']:
+            ele = self.op.find_complex(step['ui_selector'])
 
-        if ele is None:
-            return False, '未找到指定元素'
-
-        _action_succ = True
         if step['action'] == 'click':
             ele.click()
         elif step['action'] == 'input':
@@ -307,8 +304,8 @@ class async_case_runner(threading.Thread):
         elif step['action'] == 'swipe_right':
             self.op.swipe_right()
         else:
-            _action_succ = False
-        return _action_succ, f'--成功执行：{step["desc"]}' if _action_succ else f'执行失败：{step["desc"]}，未知Action'
+           raise Exception('未知动作')
+        return f'--成功执行：{step["desc"]}'
 
     def getscreen(self, file_name, needlog=False) -> str:
         u"屏幕截图,保存截图到report\screenshot目录下"

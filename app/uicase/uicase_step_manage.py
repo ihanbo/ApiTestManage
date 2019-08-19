@@ -26,7 +26,8 @@ def add_uicase_step():
     resourceid = data.get('resourceid')
     text = data.get('text')
 
-    action = data.get('action')
+    action_id = data.get('action_id')
+    action_name = data.get('action_name')
     extraParam = data.get('extraParam')
 
     if not project_name:
@@ -37,9 +38,10 @@ def add_uicase_step():
         return jsonify({'msg': '名称不能为空', 'status': 0})
     if not platform:
         return jsonify({'msg': '操作系统不能为空', 'status': 0})
-    if not resourceid and not xpath and not text:
-        return jsonify({'msg': '元素id，元素路径，元素文本至少填写一种', 'status': 0})
-    if not action:
+    if action_name == 'click' or action_name == 'input':
+        if not resourceid and not xpath and not text:
+            return jsonify({'msg': '元素id，元素路径，元素文本至少填写一种', 'status': 0})
+    if not action_id:
         return jsonify({'msg': '元素行为必须填写', 'status': 0})
 
     project_id = UI_Project.query.filter_by(name=project_name).first().id
@@ -48,7 +50,8 @@ def add_uicase_step():
     if caseStepId:
         old_data = UICaseStep.query.filter_by(id=caseStepId).first()
         old_num = old_data.num
-        if UICaseStep.query.filter_by(name=caseStepName, module_id=module_id).first() and caseStepName != old_data.name:
+        if UICaseStep.query.filter_by(name=caseStepName,
+                                      module_id=module_id).first() and caseStepName != old_data.name:
             return jsonify({'msg': '名字重复', 'status': 0})
 
         list_data = UI_Module.query.filter_by(id=module_id).first().ui_case_steps.all()
@@ -62,7 +65,7 @@ def add_uicase_step():
         old_data.xpath = xpath
         old_data.resourceid = resourceid
         old_data.text = text
-        old_data.action = action
+        old_data.action = action_id
 
         db.session.commit()
         return jsonify({'msg': '修改成功', 'status': 1, 'caseStepId': caseStepId, 'num': num})
@@ -76,14 +79,15 @@ def add_uicase_step():
                                    xpath=xpath,
                                    resourceid=resourceid,
                                    text=text,
-                                   action=action,
+                                   action=action_id,
                                    extraParam=extraParam,
                                    platform=platform,
                                    project_id=project_id,
                                    module_id=module_id)
             db.session.add(new_cases)
             db.session.commit()
-            return jsonify({'msg': '新建成功', 'status': 1, 'caseStepId': new_cases.id, 'num': new_cases.num})
+            return jsonify(
+                {'msg': '新建成功', 'status': 1, 'caseStepId': new_cases.id, 'num': new_cases.num})
 
 
 @api.route('/uicasestep/delete', methods=['POST'])
@@ -132,7 +136,8 @@ def list_uicase_step():
             return jsonify({'msg': '没有该接口信息', 'status': 0})
     else:
         case_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform)
-    pagination = case_data.order_by(UICaseStep.num.asc()).paginate(page, per_page=per_page, error_out=False)
+    pagination = case_data.order_by(UICaseStep.num.asc()).paginate(page, per_page=per_page,
+                                                                   error_out=False)
     case_data = pagination.items
     total = pagination.total
     _api = [{'id': c.id,
@@ -174,6 +179,8 @@ def edit_ui_case_step():
              'desc': _edit.desc,
              'xpath': _edit.xpath,
              'text': _edit.text,
+             'set_up': _edit.set_up,
+             'tear_down': _edit.tear_down,
              'resourceid': _edit.resourceid,
              'platform': platform.to_dict(),
              'action': action.action_to_dict(),
