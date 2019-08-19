@@ -246,6 +246,7 @@ class async_case_runner(threading.Thread):
                     """
                     有set_up的话 先调用set_up方法
                     """
+                    print(f'----{step["desc"]}发现set_up{step["set_up"]}')
                     self.set_up(step)
                     sleep(2)
 
@@ -346,8 +347,8 @@ class async_case_runner(threading.Thread):
         else:
             try:
                 self.driver.switch_to.alert.accept()
-            except Exception:
-                print(str(Exception))
+            except :
+                pass
 
     def set_up(self, step):
         func = self.ui_functions_map.get(step['set_up'])

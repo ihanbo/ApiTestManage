@@ -51,6 +51,7 @@ class BaseOperate(object):
     def find_id_text_android(self, res_id, text):
         id_text = f'resourceId("{res_id}").text("{text}")'
         return self.driver.find_element_by_android_uiautomator(id_text)
+
     def find_p_c_android(self, pid, ctext=None, cid=None, cindex=None) -> WebElement:
         if cid:
             son = f'resourceId("{pid}").childSelector(resourceId("{cid}"))'
@@ -64,7 +65,7 @@ class BaseOperate(object):
         if self.is_android:
             return self.driver.find_element_by_android_uiautomator(content)
         else:
-            return None
+            return self.driver.find_element_by_ios_predicate(content)
 
     def touch_tap(self, x, y, duration=50):
         u" 根据坐标点击元素"

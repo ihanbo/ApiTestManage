@@ -25,6 +25,7 @@ def add_uicase_step():
     xpath = data.get('xpath')
     resourceid = data.get('resourceid')
     text = data.get('text')
+    ui_selector = data.get('ui_selector')
 
     action_id = data.get('action_id')
     action_name = data.get('action_name')
@@ -39,7 +40,7 @@ def add_uicase_step():
     if not platform:
         return jsonify({'msg': '操作系统不能为空', 'status': 0})
     if action_name == 'click' or action_name == 'input':
-        if not resourceid and not xpath and not text:
+        if not resourceid and not xpath and not text and not ui_selector:
             return jsonify({'msg': '元素id，元素路径，元素文本至少填写一种', 'status': 0})
     if not action_id:
         return jsonify({'msg': '元素行为必须填写', 'status': 0})
@@ -65,6 +66,7 @@ def add_uicase_step():
         old_data.xpath = xpath
         old_data.resourceid = resourceid
         old_data.text = text
+        old_data.ui_selector = ui_selector
         old_data.action = action_id
 
         db.session.commit()
@@ -79,6 +81,7 @@ def add_uicase_step():
                                    xpath=xpath,
                                    resourceid=resourceid,
                                    text=text,
+                                   ui_selector=ui_selector,
                                    action=action_id,
                                    extraParam=extraParam,
                                    platform=platform,
