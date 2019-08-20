@@ -405,6 +405,8 @@ class UICaseStep(db.Model):
     xpath = db.Column(db.String(), comment='定位元素路径')
     resourceid = db.Column(db.String(), comment='定位元素id')
     text = db.Column(db.String(1024), comment='定位元素文本')
+    set_up = db.Column(db.String(1024), comment='前置处理')
+    tear_down = db.Column(db.String(1024), comment='后置处理')
     ui_selector = db.Column(db.String(1024), comment='复合定位元素')
     action = db.Column(db.Integer, db.ForeignKey('ui_action.id'), comment='case行为')
     ui_action = db.relationship('UIAction')

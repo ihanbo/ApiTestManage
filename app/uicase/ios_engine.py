@@ -1,3 +1,4 @@
+import traceback
 import unittest
 import os
 from appium import webdriver
@@ -19,12 +20,12 @@ class appiumSimpleTest():
                 'platformVersion': '12.2',
                 'deviceName': 'iPhone',
                 'bundleId': 'bitauto.application',
-                # 'udid': '00008020-001E11502E04002E', #xs
+                # 'udid': '00008020-001E11502E04002E',  # xs
                 'udid': '3a9b705aa4c3e42bef8dece2e8e35b581651ef35',  # 6sp
-                "xcodeOrgId": "3WB4F23CG9",
-                "xcodeSigningId": "iPhone Developer",
-                "unicodeKeyboard": True,
-                "resetKeyboard": True,
+                # "xcodeOrgId": "3WB4F23CG9",
+                # "xcodeSigningId": "iPhone Developer",
+                # "unicodeKeyboard": True,
+                # "resetKeyboard": True,
                 # "autoAcceptAlerts":True,
                 # "useNewWDA": True,
                 # "automationName": "XCUITest",
@@ -84,31 +85,48 @@ class appiumSimpleTest():
 if __name__ == '__main__':
     # suite = unittest.TestLoader().loadTestsFromTestCase(appiumSimpleTezt)
     # unittest.TextTestRunner(verbosity=2).run(suite)
-    ios = appiumSimpleTest()
-    ios.setUp()
-    print('点击我的')
-    sleep(2)
-    ios.find_by_xpath(
-        '//XCUIElementTypeApplication[@name="易车"]/XCUIElementTypeWindow[1]/XCUIElementTypeOther/XCUIElementTypeTabBar/XCUIElementTypeOther/XCUIElementTypeOther[5]').click()
-    print('点击其他方式登录')
-    sleep(2)
-    ios.find_by_xpath('//XCUIElementTypeButton[@name="使用其他登录"]').click()
-    print('点击账号登录')
-    sleep(2)
-    ios.find_by_text('账号登录').click()
-    print('输入账号')
-    sleep(2)
-    ios.find_by_xpath(
-        '//XCUIElementTypeApplication[@name="易车"]/XCUIElementTypeWindow[1]/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeScrollView/XCUIElementTypeScrollView/XCUIElementTypeOther/XCUIElementTypeTextField').send_keys(
-        '17600360026')
-    print('输入密码')
-    sleep(2)
-    ios.find_by_xpath(
-        '//XCUIElementTypeApplication[@name="易车"]/XCUIElementTypeWindow[1]/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeScrollView/XCUIElementTypeScrollView/XCUIElementTypeOther/XCUIElementTypeSecureTextField').send_keys(
-        '1313699')
-    print('点击登录')
-    sleep(2)
-    ios.find_by_xpath('//XCUIElementTypeButton[@name="登录"]').click()
-    print('完成')
 
-    ios.tearDown()
+    try:
+        ios = appiumSimpleTest()
+        ios.setUp()
+        print('点击我的')
+        ios.find_by_xpath(
+            '//XCUIElementTypeApplication[@name="易车"]/XCUIElementTypeWindow[1]/XCUIElementTypeOther/XCUIElementTypeTabBar/XCUIElementTypeOther/XCUIElementTypeOther[5]').click()
+        sleep(3)
+
+        print('点击使用其他登录')
+        ios.find_by_text('使用其他登录').click()
+        sleep(2)
+
+        # print('点击其他方式登录')
+        # ios.find_by_text('其他方式登录').click()
+        # sleep(3)
+
+        print('点击账号登录')
+        ios.find_by_text('账号登录').click()
+        sleep(2)
+
+        print('输入账号')
+        ele = ios.find_by_xpath(
+            '//XCUIElementTypeApplication[@name="易车"]/XCUIElementTypeWindow[1]/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeScrollView/XCUIElementTypeScrollView/XCUIElementTypeOther/XCUIElementTypeTextField')
+        print('--->ele' + str(ele))
+        ele.send_keys('17600360026')
+        sleep(2)
+
+        print('输入密码')
+        ios.find_by_xpath(
+            '//XCUIElementTypeApplication[@name="易车"]/XCUIElementTypeWindow[1]/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeOther/XCUIElementTypeScrollView/XCUIElementTypeScrollView/XCUIElementTypeOther/XCUIElementTypeSecureTextField').send_keys(
+            '1313699')
+        sleep(2)
+        print('点击登录')
+
+        ios.find_by_xpath('//XCUIElementTypeButton[@name="登录"]').click()
+        print('完成')
+        sleep(3)
+    except Exception :
+        traceback.print_exc()
+        pass
+    finally:
+        ios.tearDown()
+
+

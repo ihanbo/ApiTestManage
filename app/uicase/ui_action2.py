@@ -48,11 +48,24 @@ class BaseOperate(object):
         else:
             return self.driver.find_element_by_accessibility_id(text)
 
+    def find_id_text_android(self, res_id, text):
+        id_text = f'resourceId("{res_id}").text("{text}")'
+        return self.driver.find_element_by_android_uiautomator(id_text)
+
+    def find_p_c_android(self, pid, ctext=None, cid=None, cindex=None) -> WebElement:
+        if cid:
+            son = f'resourceId("{pid}").childSelector(resourceId("{cid}"))'
+        elif ctext:
+            son = f'resourceId("{pid}").childSelector(text("{ctext}"))'
+        elif cindex:
+            son = f'resourceId("{pid}").childSelector(index({cindex}))'
+        return self.driver.find_element_by_android_uiautomator(son)
+
     def find_complex(self, content: str) -> WebElement:
         if self.is_android:
             return self.driver.find_element_by_android_uiautomator(content)
         else:
-            return None
+            return self.driver.find_element_by_ios_predicate(content)
 
     def touch_tap(self, x, y, duration=50):
         u" 根据坐标点击元素"
@@ -141,7 +154,6 @@ class BaseOperate(object):
         y1 = int(l[1] * Y1)  # 起始y坐标
         y2 = int(l[1] * Y2)  # 终点y坐标
         self.driver.swipe(x1, y1, x1, y2, t)  # t 表示滑屏的时间，5代巴枪默认为600ms
-
 
     def wait_activity(self, activity=".MainActivity3", t=10) -> bool:
         '''

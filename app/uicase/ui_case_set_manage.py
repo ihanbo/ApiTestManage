@@ -190,12 +190,17 @@ def run_ui_caseset():
         return jsonify({'msg': '未找到用例', 'status': 0})
     caseset_test = {'name': _caseset.name, 'desc': _caseset.desc, 'cases': _cases_data}
 
-    succ, desc = ui_case_run.setUp(platform=_caseset.platform,
-                                   udid=data.get('udid'),
-                                   android_launch=_project.android_launch,
-                                   android_package=_project.android_package,
-                                   ios_bundle_id=_project.ios_bundle_id,
-                                   caseset_test=caseset_test)
+
+    succ, desc = ui_case_run.try_start_test(platform=_caseset.platform,
+                                            udid=data.get('udid'),
+                                            device_name=data.get('device_name'),
+                                            project_id=_caseset.project_id,
+                                            func_file=_project.func_file,
+                                            test_time=strftime("%Y-%m-%d_%H-%M-%S"),
+                                            android_launch=_project.android_launch,
+                                            android_package=_project.android_package,
+                                            ios_bundle_id=_project.ios_bundle_id,
+                                            caseset_test=caseset_test)
 
     # if succ:
     #     ui_case_run.run_ui_cases(_case.__dict__, _steps_data)
@@ -214,6 +219,6 @@ def assemble_case_with_step(case_id) -> dict:
         st.update(c.__dict__)
         st['action'] = c.ui_action.action
         _steps_data.append(st)
-    return {'case': _case, 'steps': _steps_data}
+    return {'case': _case.__dict__, 'steps': _steps_data}
 #
 #
