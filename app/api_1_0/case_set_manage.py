@@ -82,10 +82,12 @@ def find_set():
     pagination = all_sets.paginate(page, per_page=per_page, error_out=False)
     _items = pagination.items
     total = pagination.total
+    _pros = Project.query.order_by('CASE WHEN user_id={} THEN 0 END DESC'.format(current_user.id)).all()
     current_set = [{'label': s.name, 'id': s.id, 'choice': s.environment_choice,
                     'is_execute': s.is_execute, 'report_id': s.report_id} for s in _items]
     all_set = [{'label': s.name, 'id': s.id} for s in all_sets.all()]
-    return jsonify({'status': 1, 'total': total, 'data': current_set, 'all_set': all_set})
+    project_set =[{'name': p.name, 'id': p.id} for p in _pros]
+    return jsonify({'status': 1, 'total': total, 'data': current_set, 'all_set': all_set,'project_set': project_set})
 
 
 @api.route('/caseSet/edit', methods=['POST'])

@@ -21,7 +21,7 @@ def api_upload():
         if os.path.exists(toSave):
             os.remove(toSave)
         file.save(toSave)
-        return jsonify({'data': os.path.join(FILE_ADDRESS, file.filename), "msg": "上传成功", "status": 1})
+        return jsonify({'data': os.path.join(FILE_ADDRESS, file.filename), "msg": "文件上传成功", "status": 1})
 
 
 @api.route('/checkFile', methods=['POST'], strict_slashes=False)

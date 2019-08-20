@@ -184,17 +184,19 @@ def find_api_msg():
     if not project_name:
         return jsonify({'msg': '请选择项目', 'status': 0})
     if not module_id:
-        return jsonify({'msg': '请先创建{}项目下的模块'.format(project_name), 'status': 0})
-
-    if api_name:
+        return jsonify({'msg': '请先创建{}项目下的接口信息'.format(project_name), 'status': 0})
+    project_id = Project.query.filter_by(name=project_name).first().id
+    if api_name and module_id != -1:
         api_data = ApiMsg.query.filter_by(module_id=module_id).filter(ApiMsg.name.like('%{}%'.format(api_name)))
         # total = len(api_data)
         if not api_data:
             return jsonify({'msg': '没有该接口信息', 'status': 0})
+    elif module_id == "-1":    #查询当前项目下的所有接口信息
+        api_data = ApiMsg.query.filter_by(project_id=project_id)
     else:
         api_data = ApiMsg.query.filter_by(module_id=module_id)
 
-    pagination = api_data.order_by(ApiMsg.num.asc()).paginate(page, per_page=per_page, error_out=False)
+    pagination = api_data.order_by(ApiMsg.id.desc()).paginate(page, per_page=per_page, error_out=False)
     api_data = pagination.items
     total = pagination.total
     _api = [{'num': c.num,
@@ -305,7 +307,7 @@ def file_change():
                 break
         else:
             msg['status_url'] = '0'
-        new_case = ApiMsg(project_id=project_data.id, module_id=module_id, num=case_num, **msg)
+        new_case = ApiMsg(project_id=project_data.id, module_id=module_id, num=case_num, charge_name=current_user.name, **msg)
         db.session.add(new_case)
         db.session.commit()
         case_num += 1
