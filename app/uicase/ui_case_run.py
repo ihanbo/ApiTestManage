@@ -164,16 +164,16 @@ class async_case_runner(threading.Thread):
             """
             setup_func = self.ui_functions_map.get('start_app_setup')
             if setup_func:
-                sleep(5)
+                sleep(4)
                 try:
                     setup_func(driver=self.driver, op=self.op, platform=self.params['platform'])
                 except Exception as e:
                     pass
             else:
-                sleep(7)
+                sleep(4)
 
         else:
-            sleep(7)
+            sleep(4)
 
         # if self.params['is_android']:
         #     home_ac = self.params.get('home_ac', '.MainActivity3')
