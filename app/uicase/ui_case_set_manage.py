@@ -29,7 +29,7 @@ def add_uicase_set():
     if not platform:
         return jsonify({'msg': '操作系统不能为空', 'status': 0})
     if not steps:
-        return jsonify({'msg': '步骤不能为空', 'status': 0})
+        return jsonify({'msg': 'case信息不能为空', 'status': 0})
 
     project_id = UI_Project.query.filter_by(name=project_name).first().id
     num = auto_num(data.get('num'), UI_CaseSet, project_id=project_id)

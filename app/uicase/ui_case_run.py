@@ -50,6 +50,11 @@ def try_start_test(**kwargs) -> (bool, str):
         _test_desc = kwargs['caseset_test']['desc']
         _report_dir = kwargs['caseset_test']['name'] + strftime("%Y-%m-%d_%H-%M-%S")
         _test_name = kwargs['caseset_test']['name']
+    elif kwargs.get('content_test'):
+        # 录屏内容直接测试
+        _test_desc = kwargs['content_test']['case']['desc']
+        _report_dir = kwargs['content_test']['case']['name'] + strftime("%Y-%m-%d_%H-%M-%S")
+        _test_name = kwargs['content_test']['case']['name']
     else:
         return False, '未发现测试用例'
 
@@ -102,7 +107,7 @@ def android_connect(**kwargs):
     desired_caps['autoLaunch'] = 'true'
     desired_caps['appPackage'] = package
     desired_caps['appActivity'] = launch_ac
-    kwargs['driver'] = webdriver.Remote('http://0.0.0.0:4723/wd/hub', desired_caps)  # 驱动
+    kwargs['driver'] = webdriver.Remote('http://127.0.0.1:4723/wd/hub', desired_caps)  # 驱动
     async_case_runner(**kwargs).start()
 
 
@@ -138,10 +143,14 @@ class async_case_runner(threading.Thread):
         self.params = kwargs
         self.driver: webdriver = kwargs['driver']
         if kwargs.get('single_test'):
-            self.is_single_test = True
+            self.is_single_test = 1
             self.test_case = kwargs['single_test']
+        elif kwargs.get('content_test'):
+            # 录屏内容测试
+            self.is_single_test = 2
+            self.test_case = kwargs['content_test']
         elif kwargs.get('caseset_test'):
-            self.is_single_test = False
+            self.is_single_test = 3
             self.test_case = kwargs['caseset_test']
         else:
             # 找不到用例，停止驱动，删除设备
@@ -151,6 +160,7 @@ class async_case_runner(threading.Thread):
         if kwargs.get('func_file'):
             func_file = kwargs['func_file'].replace('.py', '')
             func_list = importlib.reload(importlib.import_module('func_list.{}'.format(func_file)))
+            print('@@@@@@@@@@@@@@@@@@@@@@@',func_list)
             self.ui_functions_map = {name: item for name, item in vars(func_list).items()
                                      if isinstance(item, types.FunctionType)}
         self.op = BaseOperate(kwargs['platform'], self.driver)
@@ -190,8 +200,12 @@ class async_case_runner(threading.Thread):
         result['succ'] = True
         result['cases'] = []
 
-        if self.is_single_test:
+        if self.is_single_test == 1:
             succ, report = self.test_one_case(self.test_case)
+            result['succ'] = succ
+            result['cases'].append(report)
+        elif self.is_single_test == 2:
+            succ, report = self.test_one_content_case(self.test_case)
             result['succ'] = succ
             result['cases'].append(report)
         else:
@@ -220,6 +234,49 @@ class async_case_runner(threading.Thread):
         db.session.add(case_report)
         db.session.commit()
 
+
+    def test_one_content_case(self, test: dict):
+    #录屏内容测试
+        case = test['case']
+        content = test['contentText']
+
+        print(f'-用例{case["desc"]}开始测试')
+        report = {'case_name': case['name'], 'case_desc': case['desc'], 'case_succ': True}
+
+        report['case_step'] = []
+        try:
+            if not self.params['is_android']:
+                """
+                检查ios有弹窗的话确认
+                """
+                self.check_dialog_accept()
+
+            desc = self.excuteContent(content)
+            report['case_step'].append({
+                'succ': desc,
+                'excute': desc,
+                'pic': None,
+                'stepName': case['name'],
+                'stepDesc': case['desc']
+            })
+            sleep(3)
+        except Exception as e:
+            # NoSuchElementException
+            report['case_succ'] = False
+            report['case_step'].append({
+                'succ': False,
+                'excute': str(e),
+                'pic': f"ui_reports/{self.params['report_dir']}/{self.getscreen(case['name'], needlog=True)}",
+                'stepName': '',
+                'stepDesc': ''
+            })
+            traceback.print_exc()
+            # print(f'--用例{case["desc"]}的步骤{step["desc"]}出现异常：{str(e)}')
+        # print(f'-用例{case["desc"]}结束测试: 结果{"成功" if report["case_succ"] else "失败"}')
+        return report["case_succ"], report
+
+
+
     def test_one_case(self, test: dict):
         """
         单条用例测试
@@ -246,7 +303,7 @@ class async_case_runner(threading.Thread):
                     """
                     有set_up的话 先调用set_up方法
                     """
-                    print(f'----{step["desc"]}发现set_up{step["set_up"]}')
+                    # print(f'----{step["desc"]}发现set_up{step["set_up"]}')
                     self.set_up(step)
                     sleep(2)
 
@@ -277,6 +334,41 @@ class async_case_runner(threading.Thread):
 
         print(f'-用例{case["desc"]}结束测试: 结果{"成功" if report["case_succ"] else "失败"}')
         return report["case_succ"], report
+
+    def excuteContent(self, content:str):
+        # package = ‘com.yiche.autoeasy'
+        # launch_ac = kwargs.get('android_launch', 'com.yiche.autoeasy.ADActivity')
+        """
+        self.driver.quit()
+
+        device = self.params['udid']
+        desired_caps = {}
+        desired_caps['platformName'] = 'Android'
+        desired_caps['udid'] = device
+        desired_caps['platformVersion'] = os.popen(
+            f'adb -s {device} shell getprop ro.build.version.release').read()
+        desired_caps['deviceName'] = os.popen(
+            f'adb -s {device} shell getprop ro.product.model').read()
+        desired_caps['noReset'] = 'true'
+        desired_caps['autoLaunch'] = 'true'
+        desired_caps['appPackage'] = 'com.yiche.autoeasy'
+        desired_caps['appActivity'] = 'com.yiche.autoeasy.ADActivity'
+        driver = webdriver.Remote('http://127.0.0.1:4723/wd/hub', desired_caps)
+"""
+        sleep(5)
+        globals = {
+            'driver': self.driver
+            }
+        # step=step, driver=self.driver, op=self.op, platform=self.params['platform']
+        if content:
+            try:
+                exec(content,globals)
+
+            except Exception as e:
+                print("---excuteContent运行异常：" + str(e))
+                return None
+
+        return '成功执行'
 
     def excuteLine(self, step: dict):
 
@@ -330,7 +422,7 @@ class async_case_runner(threading.Thread):
                     pass
             return _f_pic_name
         except Exception as e:
-            print("---截图异常：" + str(e))
+            # print("---截图异常：" + str(e))
             return None
 
     def check_dialog_accept(self):
@@ -352,6 +444,7 @@ class async_case_runner(threading.Thread):
 
     def set_up(self, step):
         func = self.ui_functions_map.get(step['set_up'])
+        # print('!!!!!!!!!!!!!!!!!!!!!!',func)
         if func:
             func(step=step, driver=self.driver, op=self.op, platform=self.params['platform'])
 

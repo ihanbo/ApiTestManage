@@ -380,7 +380,8 @@ class UicaseStepInfo(db.Model):
     ui_case_step_id = db.Column(db.Integer, db.ForeignKey('ui_case_step.id'), comment='步骤id')
     num = db.Column(db.Integer(), nullable=True, comment='case中step序号')
     ui_case_id = db.Column(db.Integer, db.ForeignKey('ui_case.id'), comment='caseid')
-
+    ui_type = db.Column(db.Integer(), nullable=True, default=0, comment='0为正常操作步骤，1为录屏')
+    contentText = db.Column(db.String(5120), comment='录屏内容' )
 
 def info2dic(c):
     return {'id': c.id,
@@ -413,6 +414,7 @@ class UICaseStep(db.Model):
     extraParam = db.Column(db.String(1024), comment='描述')
     platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
     module_id = db.Column(db.Integer, db.ForeignKey('ui_module.id'), comment='所属的接口模块id')
+    casesort_id = db.Column(db.Integer, db.ForeignKey('ui_casesort.id'), comment='所属的接口模块id')
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
@@ -430,11 +432,24 @@ class UI_Project(db.Model):
     android_launch = db.Column(db.String(256), comment='安卓启动activity')
     ios_bundle_id = db.Column(db.String(128), comment='iOS项目bundleid')
     modules = db.relationship('UI_Module', order_by='UI_Module.num.asc()', lazy='dynamic')
+    casesort = db.relationship('UI_CaseSort', order_by='UI_CaseSort.num.asc()', lazy='dynamic')
     case_sets = db.relationship('UI_CaseSet', order_by='UI_CaseSet.num.asc()', lazy='dynamic')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
+# uicase分类信息
+class UI_CaseSort(db.Model):
+    __tablename__ = 'ui_casesort'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    name = db.Column(db.String(64), nullable=True, comment='接口模块')
+    num = db.Column(db.Integer(), nullable=True, comment='模块序号')
+    project_id = db.Column(db.Integer, db.ForeignKey('ui_project.id'), comment='所属的项目id')
+    ui_cases = db.relationship('UICase', order_by='UICase.num.asc()', lazy='dynamic')
+    ui_case_steps = db.relationship('UICaseStep', order_by='UICaseStep.num.asc()', lazy='dynamic')
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
+# 步骤分类
 class UI_Module(db.Model):
     __tablename__ = 'ui_module'
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
@@ -452,6 +467,7 @@ class UICase(db.Model):
     id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     module_id = db.Column(db.Integer, db.ForeignKey('ui_module.id'), comment='所属的接口模块id')
+    casesort_id = db.Column(db.Integer, db.ForeignKey('ui_casesort.id'), comment='所属的接口模块id')
     platform = db.Column(db.Integer, db.ForeignKey('platform.id'), comment='对应操作系统')
     # caseset_id = db.Column(db.Integer, db.ForeignKey('ui_case_set.id'), comment='对应用例集')
     name = db.Column(db.String(256), nullable=True, comment='名称')

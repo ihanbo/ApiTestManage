@@ -129,7 +129,7 @@ def list_uicase_step():
     if not module_id:
         return jsonify({'msg': '请先创建{}项目下的模块'.format(project_name), 'status': 0})
     if not platform:
-        return jsonify({'msg': '请先选择操作系统'.format(project_name), 'status': 0})
+        return jsonify({'msg': '请先选择操作平台'.format(project_name), 'status': 0})
 
     if case_name:
         case_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform).filter(
@@ -139,7 +139,7 @@ def list_uicase_step():
             return jsonify({'msg': '没有该接口信息', 'status': 0})
     else:
         case_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform)
-    pagination = case_data.order_by(UICaseStep.num.asc()).paginate(page, per_page=per_page,
+    pagination = case_data.order_by(UICaseStep.id.desc()).paginate(page, per_page=per_page,
                                                                    error_out=False)
     case_data = pagination.items
     total = pagination.total
@@ -185,6 +185,7 @@ def edit_ui_case_step():
              'set_up': _edit.set_up,
              'tear_down': _edit.tear_down,
              'resourceid': _edit.resourceid,
+             'ui_selector': _edit.ui_selector,
              'platform': platform.to_dict(),
              'action': action.action_to_dict(),
              'extraParam': _edit.extraParam}

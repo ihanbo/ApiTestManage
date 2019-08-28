@@ -19,6 +19,7 @@ def get_pro_gather_ui():
         'CASE WHEN user_id={} THEN 0 END DESC'.format(current_user.id)).all()
     my_pros = _pros[0]
     pro = {}
+    casesort = {}
     pro_and_id = []
     for p in _pros:
         # pro_and_id[p.name] = p.id
@@ -26,19 +27,19 @@ def get_pro_gather_ui():
                            'android_launch': p.android_launch, 'ios_bundle_id': p.ios_bundle_id})
         # 获取每个项目下的接口模块
         pro[p.name] = [{'name': m.name, 'moduleId': m.id} for m in p.modules]
+        casesort[p.name] = [{'name': s.name, 'casesortId': s.id} for s in p.casesort]
 
     if my_pros:
         my_pros = {'pro_name': my_pros.name, 'model_list': pro[my_pros.name]}
-
     return jsonify(
-        {'data': pro, 'status': 1, 'user_pro': my_pros, 'pro_and_id': pro_and_id})
+        {'data': pro, 'pro': pro, 'status': 1, 'user_pro': my_pros, 'pro_and_id': pro_and_id, 'casesort': casesort})
 
 
 @api.route('/project/find_ui', methods=['POST'])
 @login_required
 def find_project_ui():
     """ 查找项目 """
-    print(f'-->static path: {REPORT_UI_ADDRESS}')
+    # print(f'-->static path: {REPORT_UI_ADDRESS}')
     data = request.json
     project_name = data.get('projectName')
     # a = db.session.execute(r'''

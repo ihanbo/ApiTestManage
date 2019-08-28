@@ -105,3 +105,95 @@ def stick_module_ui():
     num_sort(1, old_num, list_data, old_data)
     db.session.commit()
     return jsonify({'msg': '置顶完成', 'status': 1})
+
+
+# case分类信息
+@api.route('/casesort/find_casesort_ui', methods=['POST'])
+@login_required
+def find_casesort_ui():
+    """ 查找case分类信息 """
+    data = request.json
+    page = data.get('page') if data.get('page') else 1
+    per_page = data.get('sizePage') if data.get('sizePage') else 10
+    project_name = data.get('projectName')
+    if not project_name:
+        return jsonify({'msg': '请先创建属于自己的项目', 'status': 0})
+
+    all_casesort = UI_Project.query.filter_by(name=project_name).first().casesort
+    pagination = all_casesort.paginate(page, per_page=per_page, error_out=False)
+    my_module = pagination.items
+    total = pagination.total
+    my_module = [{'name': c.name, 'moduleId': c.id, 'num': c.num} for c in my_module]
+    # 查询出所有的接口模块是为了接口录入的时候可以选所有的模块p
+    _all_module = [{'name': s.name, 'moduleId': s.id, 'num': s.num} for s in all_casesort.all()]
+    return jsonify({'data': my_module, 'total': total, 'status': 1, 'all_module': _all_module})
+
+#添加case分类信息
+@api.route('/casesort/add_casesort_ui', methods=['POST'])
+@login_required
+def add_casesort_ui():
+    """ 模块增加、编辑 """
+    data = request.json
+    project_name = data.get('projectName')
+    if not project_name:
+        return jsonify({'msg': '项目名称为空，请检查后重新创建模块', 'status': 0})
+    name = data.get('name')
+    if not name:
+        return jsonify({'msg': '模块名称不能为空', 'status': 0})
+
+    ids = data.get('id')
+    project_id = UI_Project.query.filter_by(name=project_name).first().id
+    num = auto_num(data.get('num'), UI_CaseSort, project_id=project_id)
+    if ids:
+        old_data = UI_CaseSort.query.filter_by(id=ids).first()
+        old_num = old_data.num
+        list_data = UI_Project.query.filter_by(name=project_name).first().casesort.all()
+        if UI_CaseSort.query.filter_by(name=name, project_id=project_id).first() and name != old_data.name:
+            return jsonify({'msg': '模块名称重复', 'status': 0})
+
+        num_sort(num, old_num, list_data, old_data)
+        old_data.name = name
+        old_data.project_id = project_id
+        db.session.commit()
+        return jsonify({'msg': '修改成功', 'status': 1})
+    else:
+        if UI_CaseSort.query.filter_by(name=name, project_id=project_id).first():
+            return jsonify({'msg': '模块名称重复', 'status': 0})
+        else:
+            new_model = UI_CaseSort(name=name, project_id=project_id, num=num)
+            db.session.add(new_model)
+            db.session.commit()
+            return jsonify({'msg': '新建成功', 'status': 1})
+
+
+# 顶置case分类信息
+@api.route('/casesort/stick_casesort_ui', methods=['POST'])
+@login_required
+def stick_casesort_ui():
+    """ 置顶模块 """
+    data = request.json
+    module_id = data.get('id')
+    project_name = data.get('projectName')
+    old_data = UI_CaseSort.query.filter_by(id=module_id).first()
+    old_num = old_data.num
+    list_data = UI_Project.query.filter_by(name=project_name).first().casesort.all()
+    num_sort(1, old_num, list_data, old_data)
+    db.session.commit()
+    return jsonify({'msg': '置顶完成', 'status': 1})
+
+# 删除case分类信息
+@api.route('/casesort/del_casesort_ui', methods=['POST'])
+@login_required
+def del_casesort_ui():
+    """ 删除模块 """
+    data = request.json
+    ids = data.get('id')
+    _edit = UI_CaseSort.query.filter_by(id=ids).first()
+    if _edit.ui_cases.all():
+        return jsonify({'msg': '请先删除case分类下的UI用例', 'status': 0})
+    db.session.delete(_edit)
+    return jsonify({'msg': '删除成功', 'status': 1})
+
+
+
+
