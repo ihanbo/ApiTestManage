@@ -218,7 +218,7 @@ def del_uicases():
     case_id = data.get('id')
     _data = UICase.query.filter_by(id=case_id).first()
 
-    project_id = UI_Module.query.filter_by(id=_data.module_id).first().project_id
+    # project_id = UI_Module.query.filter_by(id=_data.module_id).first().project_id
     # if current_user.id != UI_Project.query.filter_by(id=project_id).first().user_id:
     #     return jsonify({'msg': '不能删除别人项目下的case', 'status': 0})
 

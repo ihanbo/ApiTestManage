@@ -78,7 +78,6 @@ def app_encrypt(target):
     str_base64_encrypt_aes = str(base64_encrypt_aes, encoding='utf-8')
     #encrypted_target = str(base64.encodebytes(encrypt_aes), encoding='utf-8')  # 执行加密并转码返回bytes
     encrypted_target = str_base64_encrypt_aes.replace('+', '-').replace('/', '_').replace('\n', '')
-    #print(encrypted_target)
     return encrypted_target
 
 #解密方法
@@ -100,7 +99,6 @@ def app_decrypt(target, key):
     #decrypted_target = str(aes.decrypt(base64_decrypted),encoding='utf-8').replace('\0','').replace('\n','')
     unpad_data = unpad(aes.decrypt(base64_decrypted),bs)
     decrypted_target = str(unpad_data, encoding ='utf-8').replace('\0', '').replace('\n', '')
-    print(decrypted_target)
     return decrypted_target
 
 if __name__ == '__main__':

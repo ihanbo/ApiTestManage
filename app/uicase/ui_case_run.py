@@ -12,6 +12,8 @@ from selenium.webdriver.remote.webelement import WebElement
 from time import sleep, strftime
 import threading
 
+from appium.webdriver.common.touch_action import TouchAction
+
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -55,8 +57,13 @@ def try_start_test(**kwargs) -> (bool, str):
         _test_desc = kwargs['content_test']['case']['desc']
         _report_dir = kwargs['content_test']['case']['name'] + strftime("%Y-%m-%d_%H-%M-%S")
         _test_name = kwargs['content_test']['case']['name']
+    elif kwargs.get('casecontent_test'):
+        #录屏内容批量测试
+        _test_desc = kwargs['casecontent_test']['desc']
+        _report_dir = kwargs['casecontent_test']['name'] + strftime("%Y-%m-%d_%H-%M-%S")
+        _test_name = kwargs['casecontent_test']['name']
     else:
-        return False, '未发现测试用例'
+        return False, '未发现测试用例信息'
 
     kwargs['report_dir'] = _report_dir  # 目录地址
     kwargs['test_desc'] = _test_desc  # 描述（中文描述）
@@ -152,6 +159,10 @@ class async_case_runner(threading.Thread):
         elif kwargs.get('caseset_test'):
             self.is_single_test = 3
             self.test_case = kwargs['caseset_test']
+        elif kwargs.get('casecontent_test'):
+            #录屏内容批量测试
+            self.is_single_test = 4
+            self.test_case = kwargs['casecontent_test']
         else:
             # 找不到用例，停止驱动，删除设备
             global running_devices
@@ -160,7 +171,7 @@ class async_case_runner(threading.Thread):
         if kwargs.get('func_file'):
             func_file = kwargs['func_file'].replace('.py', '')
             func_list = importlib.reload(importlib.import_module('func_list.{}'.format(func_file)))
-            print('@@@@@@@@@@@@@@@@@@@@@@@',func_list)
+            # print('@@@@@@@@@@@@@@@@@@@@@@@',func_list)
             self.ui_functions_map = {name: item for name, item in vars(func_list).items()
                                      if isinstance(item, types.FunctionType)}
         self.op = BaseOperate(kwargs['platform'], self.driver)
@@ -205,12 +216,21 @@ class async_case_runner(threading.Thread):
             result['succ'] = succ
             result['cases'].append(report)
         elif self.is_single_test == 2:
+            #单个录屏内容测试
             succ, report = self.test_one_content_case(self.test_case)
             result['succ'] = succ
             result['cases'].append(report)
-        else:
+        elif self.is_single_test == 3:
             for test in self.test_case['cases']:
                 succ, report = self.test_one_case(test)
+                result['succ'] = succ
+                result['cases'].append(report)
+                if not succ:
+                    break
+        elif self.is_single_test == 4:
+            #多个录屏内容测试
+            for test in self.test_case['cases']:
+                succ, report = self.test_one_content_case(test)
                 result['succ'] = succ
                 result['cases'].append(report)
                 if not succ:
@@ -252,13 +272,24 @@ class async_case_runner(threading.Thread):
                 self.check_dialog_accept()
 
             desc = self.excuteContent(content)
-            report['case_step'].append({
-                'succ': desc,
-                'excute': desc,
-                'pic': None,
-                'stepName': case['name'],
-                'stepDesc': case['desc']
-            })
+            if desc:
+                report['case_step'].append({
+                    'succ': desc,
+                    'excute': desc,
+                    'pic': None,
+                    'stepName': case['name'],
+                    'stepDesc': case['desc']
+                })
+            else:
+                report['case_succ'] = False
+                report['case_step'].append({
+                    'succ': '执行失败',
+                    'excute': '执行失败',
+                    'pic': f"ui_reports/{self.params['report_dir']}/{self.getscreen(case['name'], needlog=True)}",
+                    'stepName': case['name'],
+                    'stepDesc': case['desc']
+                })
+
             sleep(3)
         except Exception as e:
             # NoSuchElementException
@@ -357,7 +388,8 @@ class async_case_runner(threading.Thread):
 """
         sleep(5)
         globals = {
-            'driver': self.driver
+            'driver': self.driver,
+            'TouchAction': TouchAction
             }
         # step=step, driver=self.driver, op=self.op, platform=self.params['platform']
         if content:
@@ -366,9 +398,9 @@ class async_case_runner(threading.Thread):
 
             except Exception as e:
                 print("---excuteContent运行异常：" + str(e))
-                return None
+                return ''
 
-        return '成功执行'
+        return '执行成功'
 
     def excuteLine(self, step: dict):
 

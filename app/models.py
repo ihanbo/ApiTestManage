@@ -494,6 +494,7 @@ class UI_CaseSet(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('ui_project.id'), comment='所属的项目id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+    set_type = db.Column(db.Integer(), nullable=True, comment='用例集类别 0正常步骤用例集，1录屏用例集')
 
 
 class UICaseReport(db.Model):
