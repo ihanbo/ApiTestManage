@@ -21,6 +21,7 @@ def add_uicase_set():
     caseSetDesc = data.get('caseSetDesc')
     platform = data.get('platform')
     steps = data.get('steps')
+    moduleId = data.get('moduleId')
 
     if not project_name:
         return jsonify({'msg': '项目不能为空', 'status': 0})
@@ -61,6 +62,7 @@ def add_uicase_set():
         old_data.desc = caseSetDesc
         old_data.platform = platform
         old_data.set_type = case_type
+        old_data.service_id = moduleId
         db.session.commit()
 
         updateUICaseInfo(caseSetId, steps)
@@ -81,7 +83,8 @@ def add_uicase_set():
                                    desc=caseSetDesc,
                                    platform=platform,
                                    project_id=project_id,
-                                   set_type=case_type)
+                                   set_type=case_type,
+                                   service_id=moduleId)
             db.session.add(new_cases)
             db.session.commit()
             updateUICaseInfo(new_cases.id, steps)
@@ -111,12 +114,13 @@ def list_uicase_set():
     platform = data.get('platform')
     page = data.get('page') if data.get('page') else 1
     per_page = data.get('sizePage') if data.get('sizePage') else 20
+    moduleId = data.get('moduleId')
 
     project_id = UI_Project.query.filter_by(name=project_name).first().id
     if not project_name or not project_id:
         return jsonify({'msg': '请先选择项目', 'status': 0})
     if not platform:
-        return jsonify({'msg': '请先选择操作系统'.format(project_name), 'status': 0})
+        return jsonify({'msg': '请先选择应用平台'.format(project_name), 'status': 0})
 
     if case_set_name:
         case_data = UI_CaseSet.query.filter_by(project_id=project_id, platform=platform).filter(
@@ -125,7 +129,7 @@ def list_uicase_set():
         if not case_data:
             return jsonify({'msg': '没有该用例集', 'status': 0})
     else:
-        case_data = UI_CaseSet.query.filter_by(project_id=project_id, platform=platform)
+        case_data = UI_CaseSet.query.filter_by(project_id=project_id, platform=platform,service_id=moduleId)
     pagination = case_data.order_by(UI_CaseSet.num.desc()).paginate(page, per_page=per_page,
                                                                    error_out=False)
     case_data = pagination.items
@@ -186,14 +190,15 @@ def edit_uicaseset():
                             'num': c.num,
                             'name': c.name,
                             'desc': c.desc})
-
+    module_id = _edit.service_id
+    module_name = UI_CaseSort.query.filter_by(id=module_id).first().name
     platform = Platform.query.filter_by(id=_edit.platform).first()
     _data = {'name': _edit.name,
              'num': _edit.num,
              'desc': _edit.desc,
              'id': _edit.id,
-             'num': _edit.num,
              'platform': platform.to_dict(),
+             'module': {'id': int(module_id),'name':module_name},
              # 'steps': json.loads(json.dumps(_steps_data, default=info2dic))}
              'steps': _cases_data}
     return jsonify({'data': _data, 'status': 1})

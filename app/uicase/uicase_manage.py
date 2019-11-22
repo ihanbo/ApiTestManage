@@ -88,29 +88,31 @@ def import_uicase():
 
     if not project_name:
         return jsonify({'msg': '项目不能为空', 'status': 0})
-    if not module_id:
-        return jsonify({'msg': '模块不能为空', 'status': 0})
+    # if not module_id:
+    #     return jsonify({'msg': '模块不能为空', 'status': 0})
     if not caseName:
-        return jsonify({'msg': 'case名称不能为空', 'status': 0})
+        return jsonify({'msg': 'step名称不能为空', 'status': 0})
     if not platform:
         return jsonify({'msg': '操作平台不能为空', 'status': 0})
     if not contentText:
         return jsonify({'msg': '录屏内容不能为空', 'status': 0})
 
     project_id = UI_Project.query.filter_by(name=project_name).first().id
-    num = auto_num(data.get('num'), UICase, module_id=module_id)
+    # num = auto_num(data.get('num'), UICase, module_id=module_id)
+    num = auto_num(data.get('num'), UICase, project_id=project_id)
 
     if caseId:
         old_data = UICase.query.filter_by(id=caseId).first()
-        old_num = old_data.num
-        if UICase.query.filter_by(name=caseName,
-                                  module_id=module_id).first() and caseName != old_data.name:
+        # old_num = old_data.num
+        # if UICase.query.filter_by(name=caseName,
+        #                           module_id=module_id).first() and caseName != old_data.name:
+        if UICase.query.filter_by(name=caseName).first() and caseName != old_data.name:
             return jsonify({'msg': '名字重复', 'status': 0})
 
-        list_data = UI_CaseSort.query.filter_by(id=module_id).first().ui_cases.all()
-        num_sort(num, old_num, list_data, old_data)
+        # list_data = UI_CaseSort.query.filter_by(id=module_id).first().ui_cases.all()
+        # num_sort(num, old_num, list_data, old_data)
         old_data.project_id = project_id
-        old_data.module_id = module_id
+        # old_data.module_id = module_id
         old_data.name = caseName
         old_data.desc = desc
         old_data.platform = platform
@@ -120,15 +122,17 @@ def import_uicase():
         updateUiCaseImportInfo(caseId, contentText)
         return jsonify({'msg': '修改成功', 'status': 1, 'caseId': caseId, 'num': num})
     else:
-        if UICase.query.filter_by(name=caseName, module_id=module_id).first():
+        # if UICase.query.filter_by(name=caseName, module_id=module_id).first():
+        if UICase.query.filter_by(name=caseName, project_id=project_id).first():
             return jsonify({'msg': '名字重复', 'status': 0})
         else:
             new_cases = UICase(num=num,
                                name=caseName,
                                desc=desc,
                                platform=platform,
-                               project_id=project_id,
-                               module_id=module_id)
+                               project_id=project_id
+                               # module_id=module_id
+                               )
             db.session.add(new_cases)
             db.session.commit()
 
@@ -173,18 +177,20 @@ def list_uicase():
     if not platform:
         return jsonify({'msg': '请先选择操作系统'.format(project_name), 'status': 0})
 
+    project_id = UI_Project.query.filter_by(name=project_name).first().id
+
     if case_name:
         if module_id:
             case_data = UICase.query.filter_by(module_id=module_id, platform=platform).filter(
                 UICase.name.like('%{}%'.format(case_name)))
         else:
-            case_data = UICase.query.filter_by(platform=platform).filter(
+            case_data = UICase.query.filter_by(platform=platform, project_id=project_id).filter(
                 UICase.name.like('%{}%'.format(case_name)))
         # total = len(case_data)
         if not case_data:
             return jsonify({'msg': '没有该用例信息', 'status': 0})
     elif not module_id:
-        case_data = UICase.query.filter_by(platform=platform)
+        case_data = UICase.query.filter_by(platform=platform, project_id=project_id)
     else:
         case_data = UICase.query.filter_by(module_id=module_id, platform=platform)
     pagination = case_data.order_by(UICase.id.desc()).paginate(page, per_page=per_page,

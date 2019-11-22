@@ -409,6 +409,7 @@ class UICaseStep(db.Model):
     set_up = db.Column(db.String(1024), comment='前置处理')
     tear_down = db.Column(db.String(1024), comment='后置处理')
     ui_selector = db.Column(db.String(1024), comment='复合定位元素')
+    expected_value = db.Column(db.String(1024), comment='预期值')
     action = db.Column(db.Integer, db.ForeignKey('ui_action.id'), comment='case行为')
     ui_action = db.relationship('UIAction')
     extraParam = db.Column(db.String(1024), comment='描述')
@@ -432,7 +433,7 @@ class UI_Project(db.Model):
     android_launch = db.Column(db.String(256), comment='安卓启动activity')
     ios_bundle_id = db.Column(db.String(128), comment='iOS项目bundleid')
     modules = db.relationship('UI_Module', order_by='UI_Module.num.asc()', lazy='dynamic')
-    casesort = db.relationship('UI_CaseSort', order_by='UI_CaseSort.num.asc()', lazy='dynamic')
+    casesort = db.relationship('UI_CaseSort', order_by='UI_CaseSort.id.desc()', lazy='dynamic')
     case_sets = db.relationship('UI_CaseSet', order_by='UI_CaseSet.num.asc()', lazy='dynamic')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
@@ -495,6 +496,7 @@ class UI_CaseSet(db.Model):
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
     set_type = db.Column(db.Integer(), nullable=True, comment='用例集类别 0正常步骤用例集，1录屏用例集')
+    service_id = db.Column(db.Integer, db.ForeignKey('ui_casesort.id'), comment='业务类型id')
 
 
 class UICaseReport(db.Model):

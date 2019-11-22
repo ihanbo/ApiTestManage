@@ -86,8 +86,8 @@ def del_model_ui():
     data = request.json
     ids = data.get('id')
     _edit = UI_Module.query.filter_by(id=ids).first()
-    if _edit.ui_cases.all():
-        return jsonify({'msg': '请先删除模块下的UI用例', 'status': 0})
+    # if _edit.ui_cases.all():
+    #     return jsonify({'msg': '请先删除模块下的UI用例', 'status': 0})
     db.session.delete(_edit)
     return jsonify({'msg': '删除成功', 'status': 1})
 

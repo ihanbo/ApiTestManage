@@ -389,7 +389,8 @@ class async_case_runner(threading.Thread):
         sleep(5)
         globals = {
             'driver': self.driver,
-            'TouchAction': TouchAction
+            'TouchAction': TouchAction,
+            'sleep':sleep
             }
         # step=step, driver=self.driver, op=self.op, platform=self.params['platform']
         if content:

@@ -161,7 +161,6 @@ def list_uicase_step():
 @api.route('/action/list', methods=['GET'])
 def list_action():
     _data = UIAction.query.order_by(UIAction.id.asc()).all()
-    print(len(_data))
     plats = [{'id': c.id,
               'action': c.action,
               'action_name': c.action_name} for c in _data]
@@ -190,3 +189,116 @@ def edit_ui_case_step():
              'action': action.action_to_dict(),
              'extraParam': _edit.extraParam}
     return jsonify({'data': _data, 'status': 1})
+
+# 查询步骤信息 2019-11-20
+@api.route('/uicasestep/queryUIcaseStep', methods=['POST'])
+@login_required
+def query_UIcase_Step():
+    data = request.json
+    module_id = data.get('moduleId')
+    project_name = data.get('projectName')
+    platform_id = data.get('platformId')
+    page = data.get('page') if data.get('page') else 1
+    per_page = data.get('sizePage') if data.get('sizePage') else 20
+
+    porject_id = UI_Project.query.filter_by(name=project_name).first().id
+    caseStep_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform_id,project_id=porject_id)
+    pagination = caseStep_data.order_by(UICaseStep.id.desc()).paginate(page, per_page=per_page,
+                                                                   error_out=False)
+    caseStep_data = pagination.items
+    total = pagination.total
+    # action信息
+    action_data = UIAction.query.order_by(UIAction.id.asc()).all()
+    _step = [{'id': c.id,
+                 'num': c.num,
+                 'name': c.name,
+                 'desc': c.desc,
+                 'xpath': c.xpath,
+                 'resourceid': c.resourceid,
+                 'text': c.text,
+                 'action': UIAction.query.filter_by(id=c.action).first().action_name,
+                 'action_id':c.action,
+                 'created_time': c.created_time,
+                 'update_time': c.update_time,
+                 'extraParam': c.extraParam,
+                 'expected_value': c.expected_value,
+                 'isSet': False}
+                for c in caseStep_data]
+    return jsonify({'data': _step, 'total': total, 'status': 1})
+
+# 删除步骤信息  2019-11-21
+@api.route('/uicasestep/deleteUIcaseStep', methods=['POST'])
+@login_required
+def delete_UIcase_Step():
+    data = request.json
+    module_id = data.get('moduleId')
+    project_name = data.get('projectName')
+    platform_id = data.get('platformId')
+    caseStep_id = data.get('caseStepId')
+    # 获取项目id
+    porject_id = UI_Project.query.filter_by(name=project_name).first().id
+
+    _data = UICaseStep.query.filter_by(id=caseStep_id).first()
+
+    if(_data):
+        db.session.delete(_data)
+        return jsonify({'msg': '删除成功', 'status': 1})
+    else:
+        return jsonify({'msg': '删除失败', 'status': 0})
+
+
+# 添加步骤信息  2019-11-21
+@api.route('/uicasestep/addUIcaseStep', methods=['POST'])
+@login_required
+def add_UIcase_Step():
+    data = request.json
+    id = data.get('id')
+    name = data.get('name')
+    xpath = data.get('xpath')
+    action = data.get('action')
+    extra_param = data.get('extraParam')
+    expected_value = data.get('expected_value')
+    module_id = data.get('moduleId')
+    project_name = data.get('projectName')
+    platform_id = data.get('platformId')
+
+    # 获取项目id
+    project_id = UI_Project.query.filter_by(name=project_name).first().id
+    action_id = UIAction.query.filter_by(action_name = action).first().id
+    num = auto_num(data.get('num'), UICaseStep, module_id=module_id,platform=platform_id,project_id=project_id)
+
+    # 如果存在，就修改原步骤信息
+    if id:
+        old_data = UICaseStep.query.filter_by(id=id).first()
+        old_num = old_data.num
+        if UICaseStep.query.filter_by(name=name,module_id=module_id,platform=platform_id, project_id=project_id).first() and name != old_data.name:
+            return jsonify({'msg': '名称重复，请重新输入', 'status': 0})
+        # list_data = UI_Module.query.filter_by(id=module_id).first().ui_case_steps.all()
+        # num_sort(num, old_num, list_data, old_data)
+        old_data.project_id = project_id
+        old_data.module_id = module_id
+        old_data.name = name
+        old_data.extraParam = extra_param
+        old_data.platform = platform_id
+        old_data.xpath = xpath
+        old_data.action = action_id
+        old_data.expected_value = expected_value
+
+        db.session.commit()
+        return jsonify({'msg': '修改成功', 'status': 1})
+    else:
+        if(UICaseStep.query.filter_by(module_id=module_id, platform=platform_id, project_id=project_id,name=name).first()):
+            return jsonify({'msg': '名称重复，请重新输入', 'status': 0})
+        new_caseStep = UICaseStep(num=num,
+                               name=name,
+                               xpath=xpath,
+                               action=action_id,
+                               extraParam=extra_param,
+                               platform=platform_id,
+                               project_id=project_id,
+                               module_id=module_id,
+                               expected_value=expected_value)
+        db.session.add(new_caseStep)
+        db.session.commit()
+        return jsonify({'msg': '保存成功', 'status': 1})
+
