@@ -131,14 +131,16 @@ def list_uicase_step():
     if not platform:
         return jsonify({'msg': '请先选择操作平台'.format(project_name), 'status': 0})
 
+    project_id = UI_Project.query.filter_by(name=project_name).first().id
+
     if case_name:
-        case_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform).filter(
+        case_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform,project_id=project_id).filter(
             UICaseStep.name.like('%{}%'.format(case_name)))
         # total = len(case_data)
         if not case_data:
             return jsonify({'msg': '没有该接口信息', 'status': 0})
     else:
-        case_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform)
+        case_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform,project_id=project_id)
     pagination = case_data.order_by(UICaseStep.id.desc()).paginate(page, per_page=per_page,
                                                                    error_out=False)
     case_data = pagination.items
@@ -150,10 +152,11 @@ def list_uicase_step():
              'xpath': c.xpath,
              'resourceid': c.resourceid,
              'text': c.text,
-             'action': c.action,
+             'action': UIAction.query.filter_by(id=c.action).first().action_name,
              'created_time': c.created_time,
              'update_time': c.update_time,
-             'extraParam': c.extraParam, }
+             'extraParam': c.extraParam,
+             'expected_value': c.expected_value}
             for c in case_data]
     return jsonify({'data': _api, 'total': total, 'status': 1})
 
@@ -198,11 +201,18 @@ def query_UIcase_Step():
     module_id = data.get('moduleId')
     project_name = data.get('projectName')
     platform_id = data.get('platformId')
+    stepName = data.get('stepName')
     page = data.get('page') if data.get('page') else 1
-    per_page = data.get('sizePage') if data.get('sizePage') else 20
+    per_page = data.get('sizePage') if data.get('sizePage') else 10
 
     porject_id = UI_Project.query.filter_by(name=project_name).first().id
-    caseStep_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform_id,project_id=porject_id)
+
+    if stepName:
+        caseStep_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform_id, project_id=porject_id).filter(
+            UICaseStep.name.like('%{}%'.format(stepName)))
+    else :
+        caseStep_data = UICaseStep.query.filter_by(module_id=module_id, platform=platform_id, project_id=porject_id)
+
     pagination = caseStep_data.order_by(UICaseStep.id.desc()).paginate(page, per_page=per_page,
                                                                    error_out=False)
     caseStep_data = pagination.items

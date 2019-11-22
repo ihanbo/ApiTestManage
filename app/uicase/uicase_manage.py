@@ -168,10 +168,11 @@ def list_uicase():
     data = request.json
     module_id = data.get('moduleId')
     project_name = data.get('projectName')
-    case_name = data.get('caseStepName')
+    # case_name = data.get('caseStepName')
+    case_name = data.get('caseName')
     platform = data.get('platform')
     page = data.get('page') if data.get('page') else 1
-    per_page = data.get('sizePage') if data.get('sizePage') else 20
+    per_page = data.get('sizePage') if data.get('sizePage') else 10
     if not project_name:
         return jsonify({'msg': '请选择项目', 'status': 0})
     if not platform:
@@ -253,7 +254,11 @@ def edit_uicases():
             _steps_data.append({'id': c.id,
                                 'num': c.num,
                                 'name': c.name,
-                                'desc': c.desc})
+                                'desc': c.desc,
+                                'xpath': c.xpath,
+                                'action': UIAction.query.filter_by(id=c.action).first().action_name,
+                                'expected_value':c.expected_value
+                                })
 
         platform = Platform.query.filter_by(id=_edit.platform).first()
         _data = {'name': _edit.name,
@@ -283,6 +288,7 @@ def run_ui_cases():
     data = request.json
     case_id = data.get('id')
     type = data.get('type')
+    # 非录屏case
     if type == 0 :
         _udid = data.get('udid', '00008020-001E11502E04002E')
         _device_name = data.get('device_name', '苹果设备')
